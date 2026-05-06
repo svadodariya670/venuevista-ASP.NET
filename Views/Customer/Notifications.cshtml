@@ -1,0 +1,83 @@
+﻿@model List<VenueBooking.Models.Notification>
+@{
+    ViewData["Title"] = "Notifications";
+    Layout = "_CustomerLayout";
+}
+
+<div class="max-w-4xl mx-auto">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+        <div>
+            <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Notifications</h2>
+            <p class="text-slate-500 text-sm mt-1">Stay updated with your latest venue activities.</p>
+        </div>
+        @if (Model.Any(n => !n.IsRead))
+        {
+            <button onclick="markAllRead()" class="text-primary text-sm font-bold hover:underline underline-offset-4 flex items-center gap-1 self-start sm:self-auto">
+                <span class="material-symbols-outlined text-lg">done_all</span>
+                Mark all as read
+            </button>
+        }
+    </div>
+
+    <div class="flex flex-col gap-3">
+        @if (Model.Any())
+        {
+            foreach (var notification in Model)
+            {
+                var isUnread = !notification.IsRead;
+                string icon = notification.Type?.ToLower() switch
+                {
+                    "booking" => "calendar_month",
+                    "message" => "chat",
+                    "payment" => "payments",
+                    "review" => "star",
+                    _ => "notifications_active"
+                };
+
+                <div class="group @(isUnread ? "bg-white border-primary/20 ring-1 ring-primary/5" : "bg-slate-50/80 border-slate-200") p-4 rounded-xl border shadow-sm hover:shadow-md transition-all flex items-start gap-3 sm:gap-4"
+                     @(isUnread ? $"id=\"notif-{notification.NotificationId}\"" : "")>
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl @(isUnread ? "bg-primary/10" : "bg-slate-200/50") flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined @(isUnread ? "text-primary" : "text-slate-500")">@icon</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-start gap-2">
+                            <h3 class="text-sm sm:text-base font-bold @(isUnread ? "text-slate-900" : "text-slate-600") truncate">@notification.Title</h3>
+                            @if (isUnread)
+                            {
+                                <span class="w-2.5 h-2.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)] shrink-0 mt-1.5"></span>
+                            }
+                        </div>
+                        <p class="text-sm mt-1 leading-relaxed @(isUnread ? "text-slate-600" : "text-slate-500")">@notification.Message</p>
+                        <p class="text-[11px] font-medium text-slate-400 mt-2">@notification.CreatedAt.ToString("MMM dd, yyyy 'at' hh:mm tt")</p>
+                        @if (!string.IsNullOrEmpty(notification.ActionUrl))
+                        {
+                            <a href="@notification.ActionUrl" class="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline mt-2">
+                                View Details <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-center py-16">
+                <span class="material-symbols-outlined text-6xl text-slate-300">notifications_off</span>
+                <p class="text-slate-500 mt-4 text-lg">No notifications yet</p>
+                <p class="text-slate-400 text-sm mt-1">You'll be notified when something happens with your bookings.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function markAllRead() {
+            fetch('@Url.Action("MarkAllNotificationsRead", "Customer")', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) location.reload();
+                });
+        }
+    </script>
+}

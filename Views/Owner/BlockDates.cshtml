@@ -1,0 +1,294 @@
+@model VenueBooking.ViewModels.OwnerBlockDatesViewModel
+@{
+    ViewData["Title"] = "Manage Blocked Dates";
+    Layout = "_OwnerLayout";
+    var venues = ViewBag.Venues as IEnumerable<dynamic> ?? new List<dynamic>();
+}
+
+<div class="mx-auto max-w-5xl px-6 py-8">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-black">
+                @(Model.VenueId == 0 ? "Blocked Dates" : $"Blocked Dates — {Model.VenueName}")
+            </h1>
+            <p class="text-sm text-slate-500 mt-1">Block dates to prevent online bookings. Only upcoming dates (today onwards) are shown.</p>
+        </div>
+        <a asp-controller="Owner" asp-action="Venues" class="text-sm text-primary font-bold">My Venues</a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div class="w-full md:w-1/2">
+                <label class="text-sm font-medium text-slate-600 block mb-2">Select venue</label>
+                <select id="venueSelect" class="w-full px-4 py-2 border rounded-lg focus:ring-primary focus:border-primary">
+                    <option value="">-- Select venue --</option>
+                    @foreach (var v in venues)
+                    {
+                        var vid = (int)v.VenueId;
+                        if (Model.VenueId == vid)
+                        {
+                            <option value="@vid" selected="selected">@v.VenueName</option>
+                        }
+                        else
+                        {
+                            <option value="@vid">@v.VenueName</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <a asp-action="CreateVenue" class="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg font-semibold hover:bg-primary/90">
+                    <span class="material-symbols-outlined">add</span> Add Venue
+                </a>
+                @if (Model.VenueId != 0)
+                {
+                    <a asp-action="BlockDates" asp-route-venueId="@Model.VenueId" class="inline-flex items-center gap-2 bg-slate-50 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-100">
+                        <span class="material-symbols-outlined">refresh</span> Refresh
+                    </a>
+                }
+            </div>
+        </div>
+
+        @if (Model.VenueId == 0)
+        {
+            <div class="text-center py-12 text-slate-600">
+                <p class="mb-4">Please choose a venue to view and manage blocked dates.</p>
+                <p class="text-xs">Tip: If you have only one venue you'll be redirected automatically.</p>
+            </div>
+        }
+        else
+        {
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Form -->
+                <div class="lg:col-span-1 bg-background-light p-4 rounded-lg border border-slate-100">
+                    <h3 class="font-bold mb-3">Block a Date</h3>
+                    <form asp-action="AddBlockDate" method="post" class="space-y-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="venueId" value="@Model.VenueId" />
+                        <div>
+                            <label class="text-sm font-medium">Start Date</label>
+                            <input name="startDate" id="blockStartDate" type="date" required class="w-full mt-1 px-3 py-2 border rounded-lg" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium">End Date (optional)</label>
+                            <input name="endDate" id="blockEndDate" type="date" class="w-full mt-1 px-3 py-2 border rounded-lg" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                            <p class="text-xs text-slate-500 mt-1">Leave blank to block only the start date.</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium">Reason (optional)</label>
+                            <input name="reason" type="text" class="w-full mt-1 px-3 py-2 border rounded-lg" placeholder="e.g. Private event" />
+                        </div>
+                        <div>
+                            <button type="submit" class="w-full bg-primary text-white px-4 py-2 rounded-lg font-bold hover:bg-primary/90">Block Date(s)</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- List -->
+                <div class="lg:col-span-1 bg-white p-4 rounded-lg border border-slate-100">
+                    <h3 class="font-bold mb-3">Upcoming Blocked Dates</h3>
+
+                    @if (Model.BlockedDates.Any())
+                    {
+                        <ul class="space-y-3">
+                            @foreach (var b in Model.BlockedDates.OrderByDescending(x => x.BlockDate))
+                            {
+                                <li class="flex items-center justify-between border rounded p-3">
+                                    <div>
+                                        <div class="font-bold text-slate-800">@b.BlockDate.ToString("dddd, MMM dd, yyyy")</div>
+                                        @if (!string.IsNullOrWhiteSpace(b.Reason))
+                                        {
+                                            <div class="text-sm text-slate-500">@b.Reason</div>
+                                        }
+                                    </div>
+                                    <div class="flex flex-col items-end gap-2">
+                                        <form asp-action="DeleteBlockedDate" method="post" onsubmit="return confirm('Unblock this date?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@b.Id" />
+                                            <button type="submit" class="text-sm text-red-600 font-bold">Unblock</button>
+                                        </form>
+                                        <span class="text-xs text-slate-400">@((b.BlockDate - DateTime.Today).Days) days left</span>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-sm text-slate-500">No upcoming blocked dates for this venue.</p>
+                    }
+                </div>
+
+                <!-- Mini calendar -->
+                <div class="lg:col-span-1 bg-white p-4 rounded-lg border border-slate-100">
+                    <h3 class="font-bold mb-3">Calendar (next 60 days)</h3>
+                    <div id="mini-calendar" class="grid grid-cols-7 gap-2 text-center text-xs"></div>
+                    <p class="text-xs text-slate-500 mt-3">Red cells are blocked dates.</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const startDateEl = document.getElementById('blockStartDate');
+            const endDateEl = document.getElementById('blockEndDate');
+
+            if (startDateEl && endDateEl) {
+                startDateEl.addEventListener('change', function (e) {
+                    if (e.target.value) {
+                        endDateEl.min = e.target.value;
+                        if(endDateEl.value && endDateEl.value < e.target.value) {
+                             endDateEl.value = '';
+                        }
+                    }
+                });
+            }
+
+            const venueSelect = document.getElementById('venueSelect');
+            if (venueSelect) {
+                venueSelect.addEventListener('change', function () {
+                    const v = this.value;
+                    if (!v) {
+                        window.location.href = '/Owner/BlockDates';
+                        return;
+                    }
+                    window.location.href = '/Owner/BlockDates?venueId=' + encodeURIComponent(v);
+                });
+            }
+
+            // Build calendar only when mini-calendar exists and model contains dates
+            var container = document.getElementById('mini-calendar');
+            if (!container) return;
+
+            // Use server-side Model.BlockedDates (already filtered to today onward)
+            var blocked = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                            Model.BlockedDates.Select(b => b.BlockDate.ToString("yyyy-MM-dd")).ToList()
+                    ));
+
+            var blockedSet = new Set(blocked || []);
+
+            container.innerHTML = '';
+            var start = new Date();
+            var days = 60;
+            for (var i = 0; i < days; i++) {
+                var d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+                
+                // Format the local date manually to avoid timezone shift!
+                var year = d.getFullYear();
+                var month = String(d.getMonth() + 1).padStart(2, '0');
+                var day = String(d.getDate()).padStart(2, '0');
+                var localIso = `${year}-${month}-${day}`;
+
+                var el = document.createElement('div');
+                el.className = 'p-2 rounded flex flex-col items-center justify-center';
+                el.innerHTML = '<div class="text-[10px] text-slate-400">' + d.toLocaleDateString(undefined, { weekday: "short" }) + '</div>'
+                             + '<div class="font-semibold">' + d.getDate() + '</div>';
+
+                if (blockedSet.has(localIso)) {
+                    el.classList.add('bg-red-50', 'border', 'border-red-200', 'text-red-700');
+                    el.setAttribute('title', 'Blocked: ' + localIso);
+                } else {
+                    el.classList.add('bg-slate-50', 'border', 'border-slate-100');
+                }
+                container.appendChild(el);
+            }
+        })();
+    </script>
+    // POST: /Owner/AddBlockDate
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddBlockDate(int venueId, string startDate, string? endDate, string? reason)
+    {
+        var ownerId = GetCurrentUserId();
+
+        var venue = await _context.Venues.FirstOrDefaultAsync(v => v.VenueId == venueId && v.OwnerId == ownerId);
+        if (venue == null) return NotFound();
+
+        // Validate Start Date
+        if (string.IsNullOrWhiteSpace(startDate) || !DateTime.TryParse(startDate, out var start))
+        {
+            TempData["Error"] = "Please select a valid start date.";
+            return RedirectToAction(nameof(BlockDates), new { venueId });
+        }
+
+        // Determine End Date (if empty or invalid, block only the start date)
+        DateTime end = start;
+        if (!string.IsNullOrWhiteSpace(endDate) && DateTime.TryParse(endDate, out var parsedEnd))
+        {
+            if (parsedEnd.Date >= start.Date)
+            {
+                end = parsedEnd;
+            }
+        }
+
+        // Prevent blocking dates in the past
+        if (start.Date < DateTime.Today)
+        {
+            TempData["Error"] = "Cannot block dates in the past.";
+            return RedirectToAction(nameof(BlockDates), new { venueId });
+        }
+
+        // Generate a list of all dates in the range
+        var allDates = Enumerable.Range(0, (end.Date - start.Date).Days + 1)
+                                 .Select(d => start.Date.AddDays(d))
+                                 .ToList();
+
+        // Check which of these dates are already blocked in the database
+        var existingDates = await _context.VenueBlockedDates
+                                          .Where(b => b.VenueId == venueId && allDates.Contains(b.BlockDate.Date))
+                                          .Select(b => b.BlockDate.Date)
+                                          .ToListAsync();
+
+        // Filter out existing dates so we don't insert duplicates
+        var datesToBlock = allDates.Except(existingDates).ToList();
+
+        if (!datesToBlock.Any())
+        {
+             TempData["Error"] = "The selected date(s) are already blocked.";
+             return RedirectToAction(nameof(BlockDates), new { venueId });
+        }
+
+        // Add the new dates to the database
+        foreach(var date in datesToBlock)
+        {
+            _context.VenueBlockedDates.Add(new VenueBlockedDate
+            {
+                VenueId = venueId,
+                BlockDate = date,
+                Reason = reason?.Trim() ?? "Owner blocked date",
+                CreatedBy = ownerId,
+                CreatedAt = DateTime.Now
+            });
+        }
+
+        await _context.SaveChangesAsync();
+
+        // Provide a dynamic success message based on whether 1 or multiple dates were blocked
+        TempData["Success"] = $"Blocked {(datesToBlock.Count > 1 ? $"{datesToBlock.Count} dates" : datesToBlock.First().ToString("MMM dd, yyyy"))} successfully.";
+        return RedirectToAction(nameof(BlockDates), new { venueId });
+    }
+        <form asp-action="AddBlockDate" method="post" class="space-y-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="venueId" value="@Model.VenueId" />
+            <div>
+                <label class="text-sm font-medium">Start Date</label>
+                <input name="startDate" id="blockStartDate" type="date" required class="w-full mt-1 px-3 py-2 border rounded-lg" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            </div>
+            <div>
+                <label class="text-sm font-medium">End Date (optional)</label>
+                <input name="endDate" id="blockEndDate" type="date" class="w-full mt-1 px-3 py-2 border rounded-lg" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                <p class="text-xs text-slate-500 mt-1">Leave blank to block only the start date.</p>
+            </div>
+            <div>
+                <label class="text-sm font-medium">Reason (optional)</label>
+                <input name="reason" type="text" class="w-full mt-1 px-3 py-2 border rounded-lg" placeholder="e.g. Private event" />
+            </div>
+            <div>
+                <button type="submit" class="w-full bg-primary text-white px-4 py-2 rounded-lg font-bold hover:bg-primary/90">Block Date(s)</button>
+            </div>
+        </form>
+}

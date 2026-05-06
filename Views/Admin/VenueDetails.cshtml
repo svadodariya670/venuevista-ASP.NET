@@ -1,0 +1,201 @@
+@model VenueBooking.Models.Venue
+@{
+    ViewData["Title"] = "Venue Details";
+    Layout = "_AdminLayout";
+}
+
+<div class="max-w-[1200px] mx-auto">
+    <!-- Back Button & Header -->
+    <div class="mb-8">
+        <a asp-action="Venues" class="inline-flex items-center gap-1 text-slate-500 hover:text-primary transition-colors mb-4">
+            <span class="material-symbols-outlined text-lg">arrow_back</span>
+            <span class="text-sm font-medium">Back to Venues</span>
+        </a>
+        <div class="flex items-start justify-between">
+            <div>
+                <h2 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">@Model.VenueName</h2>
+                <p class="text-slate-500 mt-1">@Model.City, @Model.State · ID: #@Model.VenueId</p>
+            </div>
+            <div class="flex gap-2">
+                @if (!Model.IsVerified)
+                {
+                    <button onclick="verifyVenue(@Model.VenueId)"
+                            class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-lg">check_circle</span> Approve
+                    </button>
+                }
+                @if (Model.IsVerified)
+                {
+                    <span class="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 text-sm font-bold">? Verified</span>
+                }
+                @if (!Model.IsActive)
+                {
+                    <span class="px-3 py-1.5 rounded-lg bg-red-100 text-red-600 text-sm font-bold">Inactive</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Column -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Images -->
+            <div class="bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                @if (Model.Images != null && Model.Images.Any())
+                {
+                    <div class="grid grid-cols-3 gap-1">
+                        @foreach (var image in Model.Images.OrderBy(i => i.DisplayOrder))
+                        {
+                            <div class="relative aspect-video overflow-hidden @(image.IsCover ? "col-span-3" : "")">
+                                <img src="@image.ImageUrl" alt="@Model.VenueName" class="w-full h-full object-cover" />
+                                @if (image.IsCover)
+                                {
+                                    <span class="absolute top-2 left-2 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded">COVER</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="h-48 flex items-center justify-center bg-slate-100 text-slate-400">
+                        <span class="material-symbols-outlined text-4xl">image</span>
+                    </div>
+                }
+            </div>
+
+            <!-- Description -->
+            <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <h3 class="text-lg font-bold mb-3 text-slate-900 dark:text-white">Description</h3>
+                <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed whitespace-pre-line">@(Model.Description ?? "No description provided.")</p>
+            </div>
+
+            <!-- Amenities -->
+            @if (Model.VenueAmenities != null && Model.VenueAmenities.Any())
+            {
+                <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <h3 class="text-lg font-bold mb-4 text-slate-900 dark:text-white">Amenities</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        @foreach (var va in Model.VenueAmenities)
+                        {
+                            <div class="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                                <span class="material-symbols-outlined text-primary text-lg">@(va.Amenity?.Icon ?? "check_circle")</span>
+                                <span class="text-sm text-slate-700 dark:text-slate-300">@(va.Amenity?.Name ?? "Amenity")</span>
+                                @if (va.IsChargeable && va.Price.HasValue)
+                                {
+                                    <span class="ml-auto text-xs text-slate-500">?@va.Price.Value.ToString("N0")</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Themes -->
+            @if (Model.Themes != null && Model.Themes.Any())
+            {
+                <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <h3 class="text-lg font-bold mb-4 text-slate-900 dark:text-white">Themes (@Model.Themes.Count)</h3>
+                    <div class="space-y-3">
+                        @foreach (var theme in Model.Themes)
+                        {
+                            <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                                <div>
+                                    <p class="text-sm font-bold text-slate-800 dark:text-white">@theme.ThemeName</p>
+                                    <p class="text-xs text-slate-500">@(theme.IsActive ? "Active" : "Inactive")</p>
+                                </div>
+                                @if (theme.Pricings != null && theme.Pricings.Any())
+                                {
+                                    <span class="text-sm font-bold text-primary">?@theme.Pricings.First().PricePerDay.ToString("N0")/day</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Right Column -->
+        <div class="space-y-6">
+            <!-- Quick Info -->
+            <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <h3 class="text-lg font-bold mb-4 text-slate-900 dark:text-white">Venue Info</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-slate-400">category</span>
+                        <div>
+                            <p class="text-xs text-slate-500">Type</p>
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300">@Model.VenueType</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-slate-400">group</span>
+                        <div>
+                            <p class="text-xs text-slate-500">Capacity</p>
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300">@Model.Capacity guests</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-slate-400">location_on</span>
+                        <div>
+                            <p class="text-xs text-slate-500">Address</p>
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300">@Model.Address</p>
+                            <p class="text-xs text-slate-500">@Model.City, @Model.State, @Model.Country</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-slate-400">call</span>
+                        <div>
+                            <p class="text-xs text-slate-500">Contact</p>
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300">@(Model.ContactPhone ?? "Not provided")</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-slate-400">calendar_today</span>
+                        <div>
+                            <p class="text-xs text-slate-500">Created</p>
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300">@Model.CreatedAt.ToString("MMM dd, yyyy")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Owner Info -->
+            @if (Model.Owner != null)
+            {
+                <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <h3 class="text-lg font-bold mb-4 text-slate-900 dark:text-white">Owner</h3>
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                            @Model.Owner.Name?[0]
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-800 dark:text-white">@Model.Owner.Name</p>
+                            <p class="text-xs text-slate-500">@Model.Owner.Email</p>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Booking Stats -->
+            <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <h3 class="text-lg font-bold mb-4 text-slate-900 dark:text-white">Bookings</h3>
+                <p class="text-3xl font-bold text-primary">@(Model.Bookings?.Count ?? 0)</p>
+                <p class="text-sm text-slate-500">total bookings</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function verifyVenue(venueId) {
+            if (confirm('Approve this venue?')) {
+                fetch('/Admin/VerifyVenue/' + venueId, { method: 'POST' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) { if (data.success) location.reload(); else alert(data.error || 'Failed.'); })
+                    .catch(function () { alert('Network error.'); });
+            }
+        }
+    </script>
+}

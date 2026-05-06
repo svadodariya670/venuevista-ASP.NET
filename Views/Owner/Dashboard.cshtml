@@ -1,0 +1,183 @@
+﻿@model VenueBooking.ViewModels.OwnerDashboardViewModel
+@using VenueBooking.Models.Enums
+@{
+    ViewData["Title"] = "Owner Dashboard";
+    Layout = "_OwnerLayout";
+}
+
+<!-- Header -->
+<header class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4 bg-white p-5 sm:p-6 rounded-xl border border-primary/10 shadow-sm">
+    <div>
+        <h2 class="text-xl sm:text-2xl font-bold text-text-main">Welcome back, @Model.OwnerName!</h2>
+        <p class="text-sm text-secondary/60 mt-1">Here's what's happening with your venues today.</p>
+    </div>
+    <a asp-action="CreateVenue" class="px-4 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2 self-start sm:self-auto">
+        <span class="material-symbols-outlined text-sm">add</span>
+        Add New Venue
+    </a>
+</header>
+
+<!-- Stats Grid -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+    <div class="bg-white p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm">
+        <div class="flex items-center justify-between mb-3 sm:mb-4">
+            <div class="p-2 sm:p-3 bg-primary/10 rounded-lg text-primary">
+                <span class="material-symbols-outlined text-xl sm:text-2xl">corporate_fare</span>
+            </div>
+            <span class="text-[10px] sm:text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+@Model.NewVenuesThisMonth</span>
+        </div>
+        <h3 class="text-2xl sm:text-3xl font-bold text-text-main">@Model.TotalVenues</h3>
+        <p class="text-xs sm:text-sm text-secondary/60">Total Venues</p>
+    </div>
+
+    <div class="bg-white p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm">
+        <div class="flex items-center justify-between mb-3 sm:mb-4">
+            <div class="p-2 sm:p-3 bg-secondary/10 rounded-lg text-secondary">
+                <span class="material-symbols-outlined text-xl sm:text-2xl">event_available</span>
+            </div>
+            <span class="text-[10px] sm:text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">@Model.PendingBookings pending</span>
+        </div>
+        <h3 class="text-2xl sm:text-3xl font-bold text-text-main">@Model.ActiveBookings</h3>
+        <p class="text-xs sm:text-sm text-secondary/60">Active Bookings</p>
+    </div>
+
+    <div class="bg-white p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm">
+        <div class="flex items-center justify-between mb-3 sm:mb-4">
+            <div class="p-2 sm:p-3 bg-green-100 rounded-lg text-green-600">
+                <span class="material-symbols-outlined text-xl sm:text-2xl">payments</span>
+            </div>
+            <span class="text-[10px] sm:text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+@Model.RevenueGrowth%</span>
+        </div>
+        <h3 class="text-2xl sm:text-3xl font-bold text-text-main">₹@Model.TotalRevenue.ToString("N0")</h3>
+        <p class="text-xs sm:text-sm text-secondary/60">Revenue This Month</p>
+    </div>
+
+    <div class="bg-white p-4 sm:p-6 rounded-xl border border-primary/10 shadow-sm">
+        <div class="flex items-center justify-between mb-3 sm:mb-4">
+            <div class="p-2 sm:p-3 bg-yellow-100 rounded-lg text-yellow-600">
+                <span class="material-symbols-outlined text-xl sm:text-2xl">star</span>
+            </div>
+            <span class="text-[10px] sm:text-xs font-medium text-secondary bg-slate-100 px-2 py-0.5 rounded-full">@Model.TotalReviews reviews</span>
+        </div>
+        <div class="flex items-baseline gap-2">
+            <h3 class="text-2xl sm:text-3xl font-bold text-text-main">@Model.AverageRating.ToString("F1")</h3>
+            <span class="text-sm text-secondary/60">/ 5.0</span>
+        </div>
+        <p class="text-xs sm:text-sm text-secondary/60">Average Rating</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+    <!-- Recent Bookings -->
+    <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white rounded-xl border border-primary/10 shadow-sm overflow-hidden">
+            <div class="px-5 sm:px-6 py-4 border-b border-primary/10 flex items-center justify-between">
+                <h3 class="text-lg font-bold flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">event_upcoming</span>
+                    Recent Bookings
+                </h3>
+                <a asp-action="Bookings" class="text-sm text-primary font-medium hover:underline">View All</a>
+            </div>
+            @if (Model.RecentBookings.Any())
+            {
+                <div class="divide-y divide-slate-100">
+                    @foreach (var booking in Model.RecentBookings)
+                    {
+                        <a asp-action="BookingDetails" asp-route-id="@booking.BookingId" class="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-slate-50 transition-colors gap-3">
+                            <div class="flex items-center gap-3 sm:gap-4">
+                                <div class="size-10 sm:size-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary shrink-0">
+                                    <span class="material-symbols-outlined">confirmation_number</span>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-text-main text-sm sm:text-base">@booking.CustomerName</p>
+                                    <p class="text-xs sm:text-sm text-secondary/60">@booking.VenueName · @booking.EventType</p>
+                                    <p class="text-xs text-secondary/40 mt-0.5">@booking.StartDate.ToString("MMM dd, yyyy")</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between sm:flex-col sm:items-end gap-2">
+                                <span class="px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wide
+                                    @(booking.Status == BookingStatus.Confirmed ? "bg-green-100 text-green-700" :
+                                      booking.Status == BookingStatus.Pending ? "bg-yellow-100 text-yellow-700" :
+                                      booking.Status == BookingStatus.Contacted ? "bg-blue-100 text-blue-700" :
+                                      booking.Status == BookingStatus.Rejected || booking.Status == BookingStatus.Cancelled ? "bg-red-100 text-red-700" :
+                                      "bg-slate-100 text-slate-700")">
+                                    @booking.Status
+                                </span>
+                                <p class="text-sm font-semibold text-text-main">₹@booking.TotalPrice.ToString("N0")</p>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="p-10 text-center">
+                    <span class="material-symbols-outlined text-4xl text-slate-300">event_busy</span>
+                    <p class="text-slate-500 mt-2">No bookings yet</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="space-y-6">
+        <!-- Subscription Status -->
+        <div class="bg-white rounded-xl border border-primary/10 shadow-sm overflow-hidden">
+            <div class="px-5 sm:px-6 py-4 border-b border-primary/10 bg-primary/5">
+                <h3 class="text-lg font-bold flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">sell</span>
+                    Subscription
+                </h3>
+            </div>
+            <div class="p-5 sm:p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-sm font-medium text-secondary/60">Current Plan</span>
+                    <span class="px-3 py-1 bg-primary/20 text-primary text-xs font-bold rounded-full">@Model.SubscriptionPlanName</span>
+                </div>
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-secondary/60">Venues Used</span>
+                        <span class="font-medium">@Model.CurrentVenueCount / @Model.MaxVenuesAllowed</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2">
+                        <div class="bg-primary h-2 rounded-full" style="width: @(Model.VenueUsagePercentage)%"></div>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-sm text-secondary/60">Expires in</span>
+                    <span class="font-bold @(Model.SubscriptionDaysLeft <= 7 ? "text-red-600" : "text-secondary")">
+                        @Model.SubscriptionDaysLeft days
+                    </span>
+                </div>
+                <a asp-action="Subscription" class="w-full py-2 border border-primary/20 rounded-lg text-sm font-semibold text-secondary hover:bg-primary/5 transition-all text-center block">
+                    Manage Subscription
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-xl border border-primary/10 shadow-sm overflow-hidden">
+            <div class="px-5 sm:px-6 py-4 border-b border-primary/10">
+                <h3 class="text-lg font-bold">Quick Actions</h3>
+            </div>
+            <div class="p-4 space-y-2">
+                <a asp-action="CreateVenue" class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                    <span class="material-symbols-outlined text-secondary">add_location</span>
+                    <span class="font-medium text-sm">Add New Venue</span>
+                </a>
+                <a asp-action="CreateTheme" class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                    <span class="material-symbols-outlined text-secondary">palette</span>
+                    <span class="font-medium text-sm">Add New Theme</span>
+                </a>
+                <a asp-action="Bookings" class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                    <span class="material-symbols-outlined text-secondary">calendar_add_on</span>
+                    <span class="font-medium text-sm">View Bookings</span>
+                </a>
+                <a asp-action="Messages" class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                    <span class="material-symbols-outlined text-secondary">chat</span>
+                    <span class="font-medium text-sm">Check Messages</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

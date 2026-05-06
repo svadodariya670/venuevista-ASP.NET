@@ -1,0 +1,206 @@
+﻿@model VenueBooking.ViewModels.AdminReviewsViewModel
+@{
+    ViewData["Title"] = "Reviews Management";
+    Layout = "_AdminLayout";
+}
+
+@Html.AntiForgeryToken()
+
+<div class="max-w-[1400px] mx-auto">
+    <!-- Header -->
+    <div class="mb-8 flex items-end justify-between">
+        <div>
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Reviews Management</h2>
+            <p class="text-slate-500 mt-1">Moderate customer reviews and ratings</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-primary/10 text-primary rounded-lg">
+                    <span class="material-symbols-outlined">reviews</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Total Reviews</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalReviews</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg">
+                    <span class="material-symbols-outlined">check_circle</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Approved</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.ApprovedReviews</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-lg">
+                    <span class="material-symbols-outlined">pending</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Pending Approval</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.PendingReviews</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 rounded-lg">
+                    <span class="material-symbols-outlined">star</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Average Rating</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.AverageRating.ToString("F1")</h3>
+        </div>
+    </div>
+
+    <!-- Rating Distribution -->
+    <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-8">
+        <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-6">Rating Distribution</h4>
+        <div class="space-y-4">
+            @for (int i = 5; i >= 1; i--)
+            {
+                var count = Model.RatingDistribution.GetValueOrDefault(i, 0);
+                var percentage = Model.TotalReviews > 0 ? (double)count / Model.TotalReviews * 100 : 0;
+                <div class="flex items-center gap-4">
+                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 w-12">@i stars</span>
+                    <div class="flex-1 bg-slate-100 dark:bg-slate-800 h-3 rounded-full overflow-hidden">
+                        <div class="bg-primary h-full rounded-full transition-all" style="width: @percentage%"></div>
+                    </div>
+                    <span class="text-sm text-slate-500 w-16 text-right">@count reviews</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
+        <div class="flex flex-col md:flex-row gap-4 justify-between">
+            <div class="flex gap-4 flex-1">
+                <div class="relative flex-1 max-w-md">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                    <input type="text" id="searchReviews" placeholder="Search review content..."
+                           class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                </div>
+                <select id="statusFilter" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20">
+                    <option value="All">All Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                </select>
+                <select id="ratingFilter" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20">
+                    <option value="0">All Ratings</option>
+                    <option value="5">5 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="2">2 Stars</option>
+                    <option value="1">1 Star</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews List -->
+    <div class="space-y-4">
+        @foreach (var review in Model.Reviews)
+        {
+            <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm review-card @(review.IsApproved ? "" : "border-l-4 border-l-amber-500")"
+                 data-status="@(review.IsApproved ? "Approved" : "Pending")"
+                 data-rating="@review.Rating"
+                 data-content="@review.Comment.ToLower()">
+                <div class="flex items-start justify-between">
+                    <div class="flex gap-4">
+                        <div class="size-12 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+                            <span class="material-symbols-outlined">person</span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <h4 class="font-bold text-slate-900 dark:text-white">@review.CustomerName</h4>
+                                <span class="text-sm text-slate-500">reviewed</span>
+                                <a asp-controller="Admin" asp-action="VenueDetails" asp-route-id="@review.VenueId"
+                                   class="text-primary font-medium hover:underline">@review.VenueName</a>
+                            </div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="flex text-yellow-400">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <span class="material-symbols-outlined text-sm @(i <= review.Rating ? "fill" : "")">star</span>
+                                    }
+                                </div>
+                                <span class="text-sm text-slate-500">@review.TimeAgo</span>
+                                @if (!review.IsApproved)
+                                {
+                                    <span class="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 text-xs font-bold rounded">Pending</span>
+                                }
+                            </div>
+                            <p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">@review.Comment</p>
+
+                            @if (!string.IsNullOrEmpty(review.ReplyContent))
+                            {
+                                <div class="mt-4 pl-4 border-l-2 border-primary/30">
+                                    <p class="text-xs text-slate-500 mb-1">Owner replied @review.RepliedAt?.ToString("MMM dd, yyyy")</p>
+                                    <p class="text-sm text-slate-600 dark:text-slate-400">@review.ReplyContent</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        @if (!review.IsApproved)
+                        {
+                            <button onclick="approveReview(@review.ReviewId)" class="px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 text-sm font-bold rounded-lg hover:bg-emerald-200 transition-colors">
+                                Approve
+                            </button>
+                        }
+                        <button onclick="deleteReview(@review.ReviewId)" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        function approveReview(reviewId) {
+            fetch('/Admin/ApproveReview/' + reviewId, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': csrfToken }
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) { if (data.success) location.reload(); });
+        }
+
+        function deleteReview(reviewId) {
+            if (confirm('Delete this review permanently?')) {
+                fetch('/Admin/DeleteReview/' + reviewId, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': csrfToken }
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (data) { if (data.success) location.reload(); });
+            }
+        }
+
+        // Client-side filters
+        document.getElementById('searchReviews').addEventListener('input', filterReviews);
+        document.getElementById('statusFilter').addEventListener('change', filterReviews);
+        document.getElementById('ratingFilter').addEventListener('change', filterReviews);
+
+        function filterReviews() {
+            var search = document.getElementById('searchReviews').value.toLowerCase();
+            var status = document.getElementById('statusFilter').value;
+            var rating = parseInt(document.getElementById('ratingFilter').value);
+
+            document.querySelectorAll('.review-card').forEach(function (card) {
+                var matchSearch = !search || (card.dataset.content || '').includes(search);
+                var matchStatus = status === 'All' || card.dataset.status === status;
+                var matchRating = rating === 0 || parseInt(card.dataset.rating) === rating;
+                card.style.display = (matchSearch && matchStatus && matchRating) ? '' : 'none';
+            });
+        }
+    </script>
+}

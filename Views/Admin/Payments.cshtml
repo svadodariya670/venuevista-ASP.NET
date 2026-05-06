@@ -1,0 +1,213 @@
+﻿@using VenueBooking.Models.Enums
+@model VenueBooking.ViewModels.AdminPaymentsViewModel
+@{
+    ViewData["Title"] = "Payments";
+    Layout = "_AdminLayout";
+}
+
+<div class="max-w-[1400px] mx-auto">
+    <!-- Header -->
+    <div class="mb-8 flex items-end justify-between">
+        <div>
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Payments & Transactions</h2>
+            <p class="text-slate-500 mt-1">Track all payment transactions and revenue</p>
+        </div>
+        <button class="bg-primary text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/30 hover:bg-primary/90 flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg">download</span>
+            Export Report
+        </button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg">
+                    <span class="material-symbols-outlined">payments</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Total Revenue</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalRevenue.ToString("C0")</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
+                    <span class="material-symbols-outlined">receipt</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Total Transactions</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalTransactions</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-lg">
+                    <span class="material-symbols-outlined">pending</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Pending</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.PendingAmount.ToString("C0")</h3>
+        </div>
+        @* <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-lg">
+                    <span class="material-symbols-outlined">refund</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Refunded</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.RefundedAmount.ToString("C0")</h3>
+        </div> *@
+    </div>
+
+    <!-- Revenue Chart -->
+    <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h4 class="text-lg font-bold text-slate-900 dark:text-white">Revenue Overview</h4>
+            <select class="bg-slate-100 dark:bg-slate-800 border-none text-sm font-bold rounded-lg px-3 py-1">
+                <option>Last 30 Days</option>
+                <option>Last 6 Months</option>
+                <option>This Year</option>
+            </select>
+        </div>
+        <div class="h-64">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
+        <div class="flex flex-col md:flex-row gap-4 justify-between">
+            <div class="flex gap-4 flex-1">
+                <div class="relative flex-1 max-w-md">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                    <input type="text" id="searchPayments" placeholder="Search transaction ID or customer..."
+                           class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                </div>
+                <select id="statusFilter" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20">
+                    <option value="All">All Status</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Failed">Failed</option>
+                    <option value="Refunded">Refunded</option>
+                </select>
+                <input type="date" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Payments Table -->
+    <div class="bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4">Transaction ID</th>
+                        <th class="px-6 py-4">Customer</th>
+                        <th class="px-6 py-4">Booking/Subscription</th>
+                        <th class="px-6 py-4">Amount</th>
+                        <th class="px-6 py-4">Method</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4">Date</th>
+                        <th class="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                    @foreach (var payment in Model.Payments)
+                    {
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <td class="px-6 py-4">
+                                <p class="text-sm font-bold text-slate-900 dark:text-white">#@payment.TransactionId</p>
+                                <p class="text-xs text-slate-500">@payment.PaymentId</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="size-8 rounded-full bg-secondary/10 text-secondary flex items-center justify-center font-bold text-xs">
+                                        @payment.CustomerInitials
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-slate-900 dark:text-white">@payment.CustomerName</p>
+                                        <p class="text-xs text-slate-500">@payment.CustomerEmail</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-sm font-medium text-slate-900 dark:text-white">@payment.PaymentFor</p>
+                                <p class="text-xs text-slate-500">#@payment.ReferenceId</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-sm font-bold text-slate-900 dark:text-white">@payment.Amount.ToString("C")</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 text-xs font-bold">
+                                    @payment.PaymentMethod
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 rounded-md text-xs font-bold
+                                        @(payment.Status == PaymentStatus.Completed ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600" :
+                                                                            payment.Status == PaymentStatus.Pending ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" :
+                                                                            payment.Status == PaymentStatus.Failed ? "bg-red-100 dark:bg-red-900/30 text-red-600" :
+                                                                            payment.Status == PaymentStatus.Refunded ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600" :
+                                                                            "bg-slate-100 dark:bg-slate-800 text-slate-600")">
+                                @payment.Status
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-500">
+                            @payment.PaidAt?.ToString("MMM dd, yyyy HH:mm")
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <button class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-all" title="View Details">
+                                    <span class="material-symbols-outlined text-lg">receipt_long</span>
+                                </button>
+                                @if (payment.Status == PaymentStatus.Completed)
+                                    {
+                                        <button onclick="refundPayment(@payment.PaymentId)" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Refund">
+                                            <span class="material-symbols-outlined text-lg">refund</span>
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Revenue Chart
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: @Json.Serialize(Model.RevenueChartLabels),
+                datasets: [{
+                    label: 'Revenue',
+                    data: @Json.Serialize(Model.RevenueChartData),
+                    backgroundColor: '#C65D3B',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { display: false } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        function refundPayment(paymentId) {
+            if (confirm('Process refund for this payment?')) {
+                fetch(`/Admin/RefundPayment/${paymentId}`, { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => { if (data.success) location.reload(); });
+            }
+        }
+    </script>
+}

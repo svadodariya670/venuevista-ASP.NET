@@ -1,0 +1,201 @@
+@model VenueBooking.ViewModels.AdminMessagesViewModel
+@{
+    ViewData["Title"] = "Messages";
+    Layout = "_AdminLayout";
+}
+
+@Html.AntiForgeryToken()
+
+<div class="max-w-[1400px] mx-auto">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+        <div>
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Messages</h2>
+            <p class="text-slate-500 mt-1">View and manage booking conversations</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="bg-card-bg dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="size-11 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                    <span class="material-symbols-outlined text-blue-600">chat</span>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-slate-900 dark:text-white">@Model.TotalMessages</p>
+                    <p class="text-xs text-slate-500 font-medium">Total Messages</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="size-11 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center">
+                    <span class="material-symbols-outlined text-red-600">mark_email_unread</span>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-slate-900 dark:text-white">@Model.UnreadMessages</p>
+                    <p class="text-xs text-slate-500 font-medium">Unread</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="size-11 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+                    <span class="material-symbols-outlined text-green-600">today</span>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-slate-900 dark:text-white">@Model.TodayMessages</p>
+                    <p class="text-xs text-slate-500 font-medium">Today</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="size-11 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
+                    <span class="material-symbols-outlined text-purple-600">forum</span>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-slate-900 dark:text-white">@Model.UniqueConversations</p>
+                    <p class="text-xs text-slate-500 font-medium">Conversations</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs & Search -->
+    <div class="bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex gap-2 flex-wrap">
+                <button onclick="filterMessages('All')" class="px-4 py-2 rounded-xl text-sm font-medium bg-primary text-white">All</button>
+                <button onclick="filterMessages('Unread')" class="px-4 py-2 rounded-xl text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200">Unread</button>
+                <button onclick="filterMessages('Received')" class="px-4 py-2 rounded-xl text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200">Received</button>
+                <button onclick="filterMessages('Sent')" class="px-4 py-2 rounded-xl text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200">Sent</button>
+            </div>
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                    <span class="material-symbols-outlined text-xl">search</span>
+                </span>
+                <input type="text" id="searchMessages" placeholder="Search messages..."
+                       class="pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm placeholder-slate-500 focus:ring-2 focus:ring-primary/20 w-full sm:w-64" />
+            </div>
+        </div>
+
+        <!-- Messages List -->
+        <div class="divide-y divide-slate-100 dark:divide-slate-800">
+            @if (!Model.Messages.Any())
+            {
+                <div class="p-12 text-center">
+                    <span class="material-symbols-outlined text-5xl text-slate-300 mb-4">forum</span>
+                    <p class="text-slate-500 font-medium">No messages found</p>
+                    <p class="text-sm text-slate-400 mt-1">Messages from booking conversations will appear here</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var msg in Model.Messages)
+                {
+                    <div class="message-row flex items-start gap-4 p-4 sm:p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer @(!msg.IsRead ? "bg-primary/5" : "")"
+                         data-sender="@msg.SenderName.ToLower()" data-content="@msg.Content.ToLower()"
+                         onclick="window.location.href='/Admin/Conversation/@msg.BookingId'">
+                        <!-- Avatar -->
+                        <div class="size-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0
+                            @(msg.SenderRole == "Owner" ? "bg-blue-100 text-blue-700" :
+                              msg.SenderRole == "Customer" ? "bg-green-100 text-green-700" :
+                              "bg-primary/10 text-primary")">
+                            @msg.SenderInitials
+                        </div>
+                        <!-- Content -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <p class="text-sm font-semibold text-slate-900 dark:text-white truncate">@msg.SenderName</p>
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full
+                                    @(msg.SenderRole == "Owner" ? "bg-blue-100 text-blue-700" :
+                                      msg.SenderRole == "Customer" ? "bg-green-100 text-green-700" :
+                                      "bg-primary/10 text-primary")">
+                                    @msg.SenderRole
+                                </span>
+                                @if (!msg.IsRead)
+                                {
+                                    <span class="size-2 bg-primary rounded-full flex-shrink-0"></span>
+                                }
+                            </div>
+                            <p class="text-sm text-slate-600 dark:text-slate-400 truncate">@msg.Content</p>
+                            <div class="flex items-center gap-3 mt-1.5">
+                                <span class="text-xs text-slate-400">
+                                    <span class="material-symbols-outlined text-xs align-middle mr-0.5">schedule</span>
+                                    @msg.SentAt.ToString("MMM dd, yyyy hh:mm tt")
+                                </span>
+                                <span class="text-xs text-slate-400">? @msg.ReceiverName</span>
+                                <span class="text-xs text-slate-400">
+                                    <span class="material-symbols-outlined text-xs align-middle mr-0.5">bookmark</span>
+                                    Booking #@msg.BookingId
+                                </span>
+                            </div>
+                        </div>
+                        <!-- Actions -->
+                        <div class="flex items-center gap-1 flex-shrink-0" onclick="event.stopPropagation()">
+                            @if (!msg.IsRead)
+                            {
+                                <button onclick="markAsRead(@msg.MessageId)" title="Mark as read"
+                                        class="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                                    <span class="material-symbols-outlined text-lg">done</span>
+                                </button>
+                            }
+                            <button onclick="deleteMessage(@msg.MessageId)" title="Delete"
+                                    class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-lg">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        function filterMessages(filter) {
+            window.location.href = '/Admin/Messages?filter=' + encodeURIComponent(filter);
+        }
+
+        document.getElementById('searchMessages').addEventListener('input', function () {
+            var term = this.value.toLowerCase();
+            document.querySelectorAll('.message-row').forEach(function (row) {
+                var sender = row.dataset.sender || '';
+                var content = row.dataset.content || '';
+                row.style.display = (sender.includes(term) || content.includes(term)) ? '' : 'none';
+            });
+        });
+
+        function markAsRead(messageId) {
+            fetch('/Admin/MarkMessageRead/' + messageId, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': csrfToken }
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) location.reload();
+            })
+            .catch(function () { alert('Network error.'); });
+        }
+
+        function deleteMessage(messageId) {
+            if (confirm('Delete this message?')) {
+                fetch('/Admin/DeleteMessage/' + messageId, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': csrfToken }
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) location.reload();
+                    else alert('Failed to delete message.');
+                })
+                .catch(function () { alert('Network error.'); });
+            }
+        }
+    </script>
+}

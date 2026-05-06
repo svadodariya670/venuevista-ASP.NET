@@ -1,0 +1,262 @@
+﻿<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] | Venue Vista Admin</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#C65D3B",
+                        "secondary": "#4A5D52",
+                        "background-light": "#FDF8F3",
+                        "card-bg": "#FFFFFF",
+                        "text-main": "#2C2C2C",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .sidebar-active {
+            background-color: rgba(198, 93, 59, 0.1);
+            color: #C65D3B;
+            border-right: 4px solid #C65D3B;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e5e7eb;
+            border-radius: 10px;
+        }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-main dark:text-slate-100 antialiased font-display">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Mobile Overlay -->
+        <div id="adminSidebarOverlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleAdminSidebar()"></div>
+
+        <!-- Sidebar -->
+        <aside id="adminSidebar" class="fixed inset-y-0 left-0 w-64 bg-card-bg dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-50 flex flex-col overflow-y-auto custom-scrollbar transform -translate-x-full lg:translate-x-0 lg:static lg:transform-none transition-transform duration-300">
+            <div class="p-6 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="bg-primary size-10 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/30">
+                        <span class="material-symbols-outlined">map</span>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Venue Vista</h1>
+                        <p class="text-xs text-slate-500 font-medium">Admin Console</p>
+                    </div>
+                </div>
+                <button onclick="toggleAdminSidebar()" class="lg:hidden p-1 text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <nav class="flex-1 px-4 space-y-1 py-4">
+                <!-- Dashboard -->
+                <a asp-controller="Admin" asp-action="Dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg @(ViewContext.RouteData.Values["Action"]?.ToString() == "Dashboard" ? "sidebar-active" : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800") transition-all font-medium text-sm">
+                    <span class="material-symbols-outlined @(ViewContext.RouteData.Values["Action"]?.ToString() == "Dashboard" ? "text-primary" : "")">dashboard</span>
+                    <span>Dashboard</span>
+                </a>
+
+                <!-- Users Management -->
+                <div class="pt-4 pb-2">
+                    <p class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Management</p>
+                </div>
+                <div class="space-y-1">
+                    <button onclick="toggleMenu('usersMenu')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm group">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined group-hover:text-primary">group</span>
+                            <span>Users</span>
+                        </div>
+                        <span class="material-symbols-outlined text-sm transition-transform" id="usersMenu-icon">expand_more</span>
+                    </button>
+                    <div id="usersMenu" class="hidden pl-11 pr-3 space-y-1 pb-2">
+                        <a asp-controller="Admin" asp-action="Users" asp-route-role="All" class="block py-1.5 text-xs text-slate-500 hover:text-primary transition-colors">All Users</a>
+                        <a asp-controller="Admin" asp-action="Users" asp-route-role="Owner" class="block py-1.5 text-xs text-slate-500 hover:text-primary transition-colors">Owners</a>
+                        <a asp-controller="Admin" asp-action="Users" asp-route-role="Customer" class="block py-1.5 text-xs text-slate-500 hover:text-primary transition-colors">Customers</a>
+                    </div>
+                </div>
+
+                <!-- Venues -->
+                <div class="space-y-1">
+                    <button onclick="toggleMenu('venuesMenu')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm group">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined group-hover:text-primary">location_on</span>
+                            <span>Venues</span>
+                        </div>
+                        <span class="material-symbols-outlined text-sm transition-transform" id="venuesMenu-icon">expand_more</span>
+                    </button>
+                    <div id="venuesMenu" class="hidden pl-11 pr-3 space-y-1 pb-2">
+                        <a asp-controller="Admin" asp-action="Venues" class="block py-1.5 text-xs text-slate-500 hover:text-primary transition-colors">All Venues</a>
+                        <a asp-controller="Admin" asp-action="Venues" asp-route-status="Pending" class="block py-1.5 text-xs text-slate-500 hover:text-primary transition-colors">Pending Approval</a>
+                        <a asp-controller="Admin" asp-action="Venues" asp-route-status="Verified" class="block py-1.5 text-xs text-slate-500 hover:text-primary transition-colors">Verified</a>
+                    </div>
+                </div>
+
+                <!-- Bookings -->
+                <a asp-controller="Admin" asp-action="Bookings" class="flex items-center gap-3 px-3 py-2.5 rounded-lg @(ViewContext.RouteData.Values["Action"]?.ToString() == "Bookings" ? "sidebar-active" : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800") transition-all text-sm group">
+                    <span class="material-symbols-outlined group-hover:text-primary">bookmark_check</span>
+                    <span>Bookings</span>
+                </a>
+
+                <!-- Customization -->
+                <div class="pt-4 pb-2">
+                    <p class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customization</p>
+                </div>
+                <a asp-controller="Admin" asp-action="Themes" class="flex items-center gap-3 px-3 py-2.5 rounded-lg @(ViewContext.RouteData.Values["Action"]?.ToString() == "Themes" ? "sidebar-active" : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800") transition-all text-sm group">
+                    <span class="material-symbols-outlined group-hover:text-primary">palette</span>
+                    <span>Themes</span>
+                </a>
+                <a asp-controller="Admin" asp-action="Amenities" class="flex items-center gap-3 px-3 py-2.5 rounded-lg @(ViewContext.RouteData.Values["Action"]?.ToString() == "Amenities" ? "sidebar-active" : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800") transition-all text-sm group">
+                    <span class="material-symbols-outlined group-hover:text-primary">check_circle</span>
+                    <span>Amenities</span>
+                </a>
+
+                <!-- Business -->
+                <div class="pt-4 pb-2">
+                    <p class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Business</p>
+                </div>
+                <div class="space-y-1">
+                    <button onclick="toggleMenu('subscriptionsMenu')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm group">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined group-hover:text-primary">card_membership</span>
+                            <span>Subscriptions</span>
+                        </div>
+                        <span class="material-symbols-outlined text-sm transition-transform" id="subscriptionsMenu-icon">expand_more</span>
+                    </button>
+                    <div id="subscriptionsMenu" class="hidden pl-11 pr-3 space-y-1 pb-2">
+                        <a asp-controller="Admin" asp-action="SubscriptionPlans" class="block py-1.5 text-xs text-slate-500 hover:text-primary transition-colors">Plans</a>
+                        <a asp-controller="Admin" asp-action="OwnerSubscriptions" class="block py-1.5 text-xs text-slate-500 hover:text-primary transition-colors">Active Subs</a>
+                    </div>
+                </div>
+                <a asp-controller="Admin" asp-action="Payments" class="flex items-center gap-3 px-3 py-2.5 rounded-lg @(ViewContext.RouteData.Values["Action"]?.ToString() == "Payments" ? "sidebar-active" : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800") transition-all text-sm group">
+                    <span class="material-symbols-outlined group-hover:text-primary">payments</span>
+                    <span>Payments</span>
+                </a>
+                <a asp-controller="Admin" asp-action="Reviews" class="flex items-center gap-3 px-3 py-2.5 rounded-lg @(ViewContext.RouteData.Values["Action"]?.ToString() == "Reviews" ? "sidebar-active" : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800") transition-all text-sm group">
+                    <span class="material-symbols-outlined group-hover:text-primary">reviews</span>
+                    <span>Reviews</span>
+                </a>
+
+                <!-- System -->
+                <div class="pt-4 pb-2">
+                    <p class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">System</p>
+                </div>
+                <a asp-controller="Admin" asp-action="Messages" class="flex items-center gap-3 px-3 py-2.5 rounded-lg @(ViewContext.RouteData.Values["Action"]?.ToString() == "Messages" ? "sidebar-active" : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800") transition-all text-sm group">
+                    <span class="material-symbols-outlined group-hover:text-primary">chat</span>
+                    <span>Messages</span>
+                </a>
+                <a asp-controller="Admin" asp-action="AuditLogs" class="flex items-center gap-3 px-3 py-2.5 rounded-lg @(ViewContext.RouteData.Values["Action"]?.ToString() == "AuditLogs" ? "sidebar-active" : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800") transition-all text-sm group">
+                    <span class="material-symbols-outlined group-hover:text-primary">history_edu</span>
+                    <span>Audit Logs</span>
+                </a>
+                <a asp-controller="Admin" asp-action="Settings" class="flex items-center gap-3 px-3 py-2.5 rounded-lg @(ViewContext.RouteData.Values["Action"]?.ToString() == "Settings" ? "sidebar-active" : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800") transition-all text-sm group">
+                    <span class="material-symbols-outlined group-hover:text-primary">settings</span>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+                <form asp-controller="Auth" asp-action="Logout" method="post">
+                    <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all text-sm font-medium">
+                        <span class="material-symbols-outlined">logout</span>
+                        <span>Logout</span>
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <!-- Top Header -->
+            <header class="h-14 lg:h-16 bg-card-bg dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 lg:px-8 z-10 flex-shrink-0">
+                <div class="flex items-center gap-3 flex-1">
+                    <!-- Mobile hamburger -->
+                    <button onclick="toggleAdminSidebar()" class="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <div class="hidden sm:block flex-1 max-w-xl">
+                        <label class="relative w-full">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <span class="material-symbols-outlined text-xl">search</span>
+                            </span>
+                            <input type="text" class="block w-full pl-10 pr-3 py-2 border-none bg-slate-100 dark:bg-slate-800 rounded-xl text-sm placeholder-slate-500 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search venues, users, or transactions..." />
+                        </label>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <button class="relative p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span class="absolute top-2 right-2 size-2 bg-primary rounded-full border-2 border-white dark:border-slate-900"></span>
+                    </button>
+                    <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-800 mx-1 hidden sm:block"></div>
+                    <div class="flex items-center gap-3">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">@User.Identity.Name</p>
+                            <p class="text-xs text-slate-500 font-medium">Super Admin</p>
+                        </div>
+                        <div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined">person</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 custom-scrollbar">
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function toggleMenu(menuId) {
+            var menu = document.getElementById(menuId);
+            var icon = document.getElementById(menuId + '-icon');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                menu.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function toggleAdminSidebar() {
+            var sidebar = document.getElementById('adminSidebar');
+            var overlay = document.getElementById('adminSidebarOverlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,445 @@
+﻿@model VenueBooking.Models.Venue
+@using VenueBooking.Models.Enums
+@{
+    ViewData["Title"] = Model.VenueName;
+    Layout = "_CustomerLayout";
+
+    var coverImage = Model.Images?.FirstOrDefault(i => i.IsCover)?.ImageUrl
+                     ?? Model.Images?.FirstOrDefault()?.ImageUrl
+                     ?? "/images/default-venue.jpg";
+    var blockedDates = ViewBag.BlockedDates as List<string> ?? [];
+    var allImages = Model.Images?.OrderBy(i => i.DisplayOrder).ToList() ?? [];
+    var amenities = Model.VenueAmenities?.Select(va => va.Amenity).Where(a => a != null).ToList() ?? [];
+    var reviews = Model.Reviews?.Where(r => r.IsApproved).OrderByDescending(r => r.CreatedAt).ToList() ?? [];
+    var avgRating = reviews.Any() ? Math.Round(reviews.Average(r => r.Rating), 1) : 0;
+
+    var activeThemes = Model.Themes?.Where(t => t.IsActive).ToList() ?? [];
+
+    // Only themes that have active pricing — these are the bookable ones
+    var bookableThemes = activeThemes.Where(t => t.Pricings?.Any(p => p.IsActive) == true).ToList();
+
+    // Auto-select the single active bookable theme (only ONE per venue)
+    var selectedTheme = bookableThemes.FirstOrDefault();
+
+    // Build pricing data for the selected theme
+    var themePricings = selectedTheme?.Pricings?
+        .Where(p => p.IsActive)
+        .Select(p => new { eventType = p.EventType, pricePerDay = p.PricePerDay })
+        .ToList() ?? [];
+
+    // Pre-compute theme display values (used in the else branch below)
+    var themeImage = selectedTheme?.Images?.FirstOrDefault()?.ImageUrl ?? "/images/default-theme.jpg";
+    var themeMinPrice = selectedTheme?.Pricings?
+        .Where(p => p.IsActive)
+        .Min(p => (decimal?)p.PricePerDay) ?? 0;
+}
+
+<div class="max-w-6xl mx-auto">
+    <!-- Back -->
+    <a asp-action="BrowseVenues" class="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4">
+        <span class="material-symbols-outlined text-lg">arrow_back</span> Back to Venues
+    </a>
+
+    <!-- Image Gallery -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-2xl overflow-hidden mb-6 h-64 sm:h-80">
+        <div class="sm:col-span-2 h-full">
+            <img src="@coverImage" alt="@Model.VenueName" class="w-full h-full object-cover" onerror="this.src='/images/default-venue.jpg'" />
+        </div>
+        <div class="hidden sm:grid grid-rows-2 gap-2 h-full">
+            @foreach (var img in allImages.Where(i => !i.IsCover).Take(2))
+            {
+                <img src="@img.ImageUrl" alt="@Model.VenueName" class="w-full h-full object-cover" onerror="this.src='/images/default-venue.jpg'" />
+            }
+            @if (allImages.Count < 3)
+            {
+                <div class="bg-slate-200 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-4xl text-slate-400">image</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Info -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Title -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-black text-slate-900">@Model.VenueName</h1>
+                        <p class="text-slate-500 flex items-center gap-1 mt-1">
+                            <span class="material-symbols-outlined text-sm">location_on</span>
+                            @Model.Address, @Model.City, @Model.State
+                        </p>
+                    </div>
+                    @if (avgRating > 0)
+                    {
+                        <div class="flex items-center gap-2 bg-amber-50 px-3 py-2 rounded-xl shrink-0">
+                            <span class="material-symbols-outlined text-amber-500">star</span>
+                            <span class="text-lg font-black text-amber-700">@avgRating</span>
+                            <span class="text-xs text-amber-600">(@reviews.Count reviews)</span>
+                        </div>
+                    }
+                </div>
+                <div class="flex flex-wrap gap-3 mt-4">
+                    <span class="px-3 py-1.5 bg-primary/10 text-primary text-sm font-bold rounded-lg">@Model.VenueType</span>
+                    <span class="px-3 py-1.5 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">groups</span> @Model.Capacity guests
+                    </span>
+                    @if (!string.IsNullOrEmpty(Model.ContactPhone))
+                    {
+                        <span class="px-3 py-1.5 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">call</span> @Model.ContactPhone
+                        </span>
+                    }
+                </div>
+            </div>
+
+            <!-- Description -->
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3">About This Venue</h3>
+                    <p class="text-slate-600 leading-relaxed text-sm">@Model.Description</p>
+                </div>
+            }
+
+            <!-- Amenities -->
+            @if (amenities.Any())
+            {
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3">Amenities</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        @foreach (var amenity in amenities)
+                        {
+                            <div class="flex items-center gap-2 text-sm text-slate-600">
+                                <span class="material-symbols-outlined text-primary text-lg">@(amenity.Icon ?? "check_circle")</span>
+                                @amenity.Name
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Themes & Pricing -->
+            @if (activeThemes.Any())
+            {
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6">
+                    <h3 class="text-lg font-bold text-slate-900 mb-4">Available Themes</h3>
+                    <div class="space-y-4">
+                        @foreach (var theme in activeThemes)
+                        {
+                            var themeImg = theme.Images?.FirstOrDefault()?.ImageUrl ?? "/images/default-theme.jpg";
+                            var minPrice = theme.Pricings?.Where(p => p.IsActive).Min(p => (decimal?)p.PricePerDay) ?? 0;
+                            <div class="flex flex-col sm:flex-row gap-4 p-4 bg-slate-50 rounded-xl">
+                                <img src="@themeImg" class="w-full sm:w-28 h-28 rounded-lg object-cover flex-shrink-0" onerror="this.src='/images/default-theme.jpg'" alt="@theme.ThemeName" />
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-slate-900">@theme.ThemeName</h4>
+                                    <p class="text-sm text-slate-500 mt-1 line-clamp-2">@theme.Description</p>
+                                    @if (theme.Pricings?.Any(p => p.IsActive) == true)
+                                    {
+                                        <div class="mt-2 flex flex-wrap gap-2">
+                                            @foreach (var pricing in theme.Pricings.Where(p => p.IsActive))
+                                            {
+                                                <span class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs">
+                                                    @pricing.EventType: <strong class="text-primary">₹@pricing.PricePerDay.ToString("N0")</strong>/day
+                                                </span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                @if (minPrice > 0)
+                                {
+                                    <div class="text-right shrink-0 self-center">
+                                        <p class="text-xs text-slate-400">From</p>
+                                        <p class="text-xl font-black text-primary">₹@minPrice.ToString("N0")</p>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Reviews -->
+            @if (reviews.Any())
+            {
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6">
+                    <h3 class="text-lg font-bold text-slate-900 mb-4">Reviews (@reviews.Count)</h3>
+                    <div class="space-y-4">
+                        @foreach (var review in reviews.Take(5))
+                        {
+                            <div class="border-b border-slate-100 pb-4 last:border-none last:pb-0">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <div class="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                            <span class="material-symbols-outlined text-sm">person</span>
+                                        </div>
+                                        <span class="font-bold text-sm text-slate-900">@(review.Customer?.Name ?? "Customer")</span>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            <span class="material-symbols-outlined text-sm @(i <= review.Rating ? "text-amber-400" : "text-slate-200")">star</span>
+                                        }
+                                    </div>
+                                </div>
+                                @if (!string.IsNullOrEmpty(review.Comment))
+                                {
+                                    <p class="text-sm text-slate-600 mt-2 ml-10">@review.Comment</p>
+                                }
+                                <p class="text-xs text-slate-400 mt-1 ml-10">@review.CreatedAt.ToString("MMM dd, yyyy")</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Sidebar: Book Now -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sticky top-24">
+                <h3 class="text-lg font-bold text-slate-900 mb-4">Book This Venue</h3>
+
+                @if (selectedTheme == null)
+                {
+                    <!-- No active theme with pricing — cannot book -->
+                    <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl text-center">
+                        <span class="material-symbols-outlined text-3xl text-amber-400 mb-2">warning</span>
+                        <p class="text-sm font-bold text-amber-800">Booking Not Available Yet</p>
+                        <p class="text-xs text-amber-600 mt-1">This venue hasn't configured pricing yet. Please contact the venue owner.</p>
+                        @if (Model.Owner != null)
+                        {
+                            <a asp-action="Messages" asp-route-ownerId="@Model.Owner.UserId"
+                               class="inline-flex items-center gap-1 mt-3 px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary/90">
+                                <span class="material-symbols-outlined text-sm">chat</span> Contact Owner
+                            </a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <form asp-action="CreateBooking" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="VenueId" value="@Model.VenueId" />
+                        <!-- Theme auto-selected (only one active per venue) -->
+                        <input type="hidden" name="ThemeId" value="@selectedTheme.ThemeId" />
+
+                        <div class="space-y-4">
+                            <!-- Active Theme Display (read-only, no select) -->
+                            <div class="p-3 bg-slate-50 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <img src="@themeImage" class="w-12 h-12 rounded-lg object-cover flex-shrink-0" onerror="this.src='/images/default-theme.jpg'" alt="@selectedTheme.ThemeName" />
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-bold text-slate-900 truncate">@selectedTheme.ThemeName</p>
+                                        <p class="text-xs text-slate-500">From ₹@themeMinPrice.ToString("N0")/day</p>
+                                    </div>
+                                    <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full uppercase flex-shrink-0">Active</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Event Date *</label>
+                                <input type="date" name="StartDate" id="startDate" min="@DateTime.Now.AddDays(1).ToString("yyyy-MM-dd")"
+                                       class="w-full px-3 py-2.5 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20" required />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">End Date *</label>
+                                <input type="date" name="EndDate" id="endDate" min="@DateTime.Now.AddDays(1).ToString("yyyy-MM-dd")"
+                                       class="w-full px-3 py-2.5 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20" required />
+                            </div>
+
+                            <!-- Event Type (populated from the active theme's pricing) -->
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Event Type *</label>
+                                @if (themePricings.Count == 1)
+                                {
+                                    <!-- Only one event type — auto-select, show as read-only -->
+                                    <input type="hidden" name="EventType" value="@themePricings[0].eventType" />
+                                    <div class="w-full px-3 py-2.5 bg-slate-50 rounded-lg text-sm text-slate-900 flex items-center justify-between">
+                                        <span>@themePricings[0].eventType</span>
+                                        <span class="font-bold text-primary">₹@themePricings[0].pricePerDay.ToString("N0")/day</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <!-- Multiple event types — let customer pick -->
+                                    <select name="EventType" id="eventTypeSelect" class="w-full px-3 py-2.5 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20" required>
+                                        <option value="">Select event type</option>
+                                        @foreach (var p in themePricings)
+                                        {
+                                            <option value="@p.eventType">@p.eventType — ₹@p.pricePerDay.ToString("N0")/day</option>
+                                        }
+                                    </select>
+                                }
+                            </div>
+
+                            <!-- Price display -->
+                            <div id="priceDisplay" class="p-3 bg-primary/5 rounded-lg @(themePricings.Count == 1 ? "" : "hidden")">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-slate-600">Price per day:</span>
+                                    <span id="pricePerDay" class="text-lg font-black text-primary">
+                                        @if (themePricings.Count == 1)
+                                        {
+                                            @:?@themePricings[0].pricePerDay.ToString("N0")
+                                        }
+                                        else
+                                        {
+                                            @:?0
+                                        }
+                                    </span>
+                                </div>
+                                <div id="totalPriceRow" class="flex items-center justify-between mt-1 pt-1 border-t border-primary/10 hidden">
+                                    <span class="text-sm text-slate-600">Total (<span id="dayCount">1</span> day<span id="dayPlural">s</span>):</span>
+                                    <span id="totalPrice" class="text-lg font-black text-primary">?0</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Special Requests</label>
+                                <textarea name="SpecialRequests" rows="2" class="w-full px-3 py-2.5 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 resize-none" placeholder="Any requirements..."></textarea>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full mt-5 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">send</span>
+                            Send Booking Request
+                        </button>
+                    </form>
+                }
+
+                @if (blockedDates.Any())
+                {
+                    <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p class="text-xs text-amber-700 font-medium">
+                            <span class="material-symbols-outlined text-sm align-middle">warning</span>
+                            Some dates are unavailable for this venue.
+                        </p>
+                    </div>
+                }
+
+                <!-- Owner Info & Contact -->
+                @if (Model.Owner != null)
+                {
+                    <div class="mt-6 pt-4 border-t border-slate-100">
+                        <p class="text-xs text-slate-400 uppercase font-bold mb-2">Venue Owner</p>
+                        <div class="flex items-center gap-3">
+                            <div class="size-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+                                <span class="material-symbols-outlined">person</span>
+                            </div>
+                            <div>
+                                <p class="font-bold text-sm text-slate-900">@Model.Owner.Name</p>
+                                <p class="text-xs text-slate-400">Venue Owner</p>
+                            </div>
+                        </div>
+                        <a asp-controller="Customer" asp-action="Messages" asp-route-ownerId="@Model.Owner.UserId"
+                           class="w-full mt-3 py-2.5 border-2 border-primary text-primary rounded-xl font-bold hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2 text-sm">
+                            <span class="material-symbols-outlined text-lg">chat</span>
+                            Message Owner
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        var blockedDates = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(blockedDates));
+        var pricings = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(themePricings));
+        var singleEventType = pricings.length === 1;
+
+        var startDateEl = document.getElementById('startDate');
+        var endDateEl = document.getElementById('endDate');
+
+        // Check if ANY date inside the range is blocked
+        function isRangeBlocked(startStr, endStr) {
+            if (!startStr || !endStr) return false;
+
+            var d = new Date(startStr);
+            var e = new Date(endStr);
+
+            while (d <= e) {
+                var year = d.getFullYear();
+                var month = String(d.getMonth() + 1).padStart(2, '0');
+                var day = String(d.getDate()).padStart(2, '0');
+                var localIso = `${year}-${month}-${day}`;
+
+                if (blockedDates.includes(localIso)) {
+                    return localIso; // Return the first blocked date found
+                }
+                d.setDate(d.getDate() + 1); // Move to next day
+            }
+            return false;
+        }
+
+        function validateDates(e) {
+            if (startDateEl.value && blockedDates.includes(startDateEl.value)) {
+                alert('The selected start date is unavailable. Please choose another.');
+                startDateEl.value = '';
+                return;
+            }
+
+            if (startDateEl.value && endDateEl.value) {
+                var conflict = isRangeBlocked(startDateEl.value, endDateEl.value);
+                if (conflict) {
+                    alert(`The venue is not available during this entire range. Date (${conflict}) is already booked or blocked. Please select different dates.`);
+                    e.target.value = '';
+                    totalPriceRow?.classList.add('hidden');
+                    return;
+                }
+            }
+
+            if (endDateEl && startDateEl.value) endDateEl.min = startDateEl.value;
+            updatePrice();
+        }
+
+        if (startDateEl) startDateEl.addEventListener('change', validateDates);
+        if (endDateEl) endDateEl.addEventListener('change', validateDates);
+
+        // Event Type selected ? show price (only when multiple event types)
+        var eventTypeSelect = document.getElementById('eventTypeSelect');
+        if (eventTypeSelect) {
+            eventTypeSelect.addEventListener('change', updatePrice);
+        }
+
+        function getSelectedPricePerDay() {
+            if (singleEventType) return pricings[0].pricePerDay;
+            var sel = document.getElementById('eventTypeSelect');
+            if (!sel || !sel.value) return null;
+            var found = pricings.find(function (p) { return p.eventType === sel.value; });
+            return found ? found.pricePerDay : null;
+        }
+
+        function updatePrice() {
+            var ppd = getSelectedPricePerDay();
+            var priceDisplay = document.getElementById('priceDisplay');
+            var totalPriceRow = document.getElementById('totalPriceRow');
+
+            if (ppd === null) {
+                if (priceDisplay) priceDisplay.classList.add('hidden');
+                return;
+            }
+
+            document.getElementById('pricePerDay').textContent = '\u20B9' + Number(ppd).toLocaleString('en-IN');
+            if (priceDisplay) priceDisplay.classList.remove('hidden');
+
+            var startVal = startDateEl ? startDateEl.value : '';
+            var endVal = endDateEl ? endDateEl.value : '';
+
+            // Double check no conflict before showing the total price
+            if (startVal && endVal && !isRangeBlocked(startVal, endVal)) {
+                var days = Math.floor((new Date(endVal) - new Date(startVal)) / (1000 * 60 * 60 * 24)) + 1;
+                if (days < 1) days = 1;
+                document.getElementById('dayCount').textContent = days;
+                document.getElementById('dayPlural').textContent = days > 1 ? 's' : '';
+                document.getElementById('totalPrice').textContent = '\u20B9' + Number(ppd * days).toLocaleString('en-IN');
+                if (totalPriceRow) totalPriceRow.classList.remove('hidden');
+            } else {
+                if (totalPriceRow) totalPriceRow.classList.add('hidden');
+            }
+        }
+
+        if (singleEventType) updatePrice();
+    </script>
+}

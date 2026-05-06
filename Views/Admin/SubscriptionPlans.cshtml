@@ -1,0 +1,306 @@
+﻿@using VenueBooking.Models.Enums
+@model VenueBooking.ViewModels.AdminSubscriptionPlansViewModel
+@{
+    ViewData["Title"] = "Subscription Plans";
+    Layout = "_AdminLayout";
+}
+
+<div class="max-w-[1400px] mx-auto">
+    <!-- Header -->
+    <div class="mb-8 flex items-end justify-between">
+        <div>
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Subscription Plans</h2>
+            <p class="text-slate-500 mt-1">Manage pricing plans for venue owners</p>
+        </div>
+        <button onclick="openPlanModal()" class="bg-primary text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/30 hover:bg-primary/90 flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg">add</span>
+            Create Plan
+        </button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-primary/10 text-primary rounded-lg">
+                    <span class="material-symbols-outlined">card_membership</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Total Plans</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalPlans</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg">
+                    <span class="material-symbols-outlined">check_circle</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Active Plans</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.ActivePlans</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
+                    <span class="material-symbols-outlined">group</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Total Subscribers</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalSubscribers</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-lg">
+                    <span class="material-symbols-outlined">payments</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Monthly Revenue</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.MonthlyRevenue.ToString("C0")</h3>
+        </div>
+    </div>
+
+    <!-- Plans Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="plansGrid">
+        @if (Model.Plans.Any())
+        {
+            @foreach (var plan in Model.Plans)
+            {
+                <div class="bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden @(plan.IsActive ? "" : "opacity-60")">
+                    <div class="p-6 border-b border-slate-200 dark:border-slate-800">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="px-2 py-1 rounded-md text-xs font-bold @(plan.IsActive ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600" : "bg-slate-100 dark:bg-slate-800 text-slate-600")">
+                                @(plan.IsActive ? "Active" : "Inactive")
+                            </span>
+                            <div class="flex gap-1">
+                                <button onclick="openEditModal(@plan.PlanId, '@System.Net.WebUtility.HtmlEncode(plan.PlanName)', @plan.Price, @plan.DurationInDays, @plan.MaxVenuesAllowed, '@System.Net.WebUtility.HtmlEncode(plan.Description ?? "")', '@System.Net.WebUtility.HtmlEncode(plan.Features ?? "[]")')"
+                                        class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all" title="Edit">
+                                    <span class="material-symbols-outlined text-lg">edit</span>
+                                </button>
+                                <button onclick="togglePlanStatus(@plan.PlanId)"
+                                        class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all" title="@(plan.IsActive ? "Deactivate" : "Activate")">
+                                    <span class="material-symbols-outlined text-lg">@(plan.IsActive ? "visibility_off" : "visibility")</span>
+                                </button>
+                                <button onclick="deletePlan(@plan.PlanId, '@System.Net.WebUtility.HtmlEncode(plan.PlanName)')"
+                                        class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Delete">
+                                    <span class="material-symbols-outlined text-lg">delete</span>
+                                </button>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">@plan.PlanName</h3>
+                        <div class="flex items-baseline gap-1 mt-2">
+                            <span class="text-3xl font-bold text-primary">@plan.Price.ToString("C0")</span>
+                            <span class="text-slate-500 text-sm">/ @plan.DurationInDays days</span>
+                        </div>
+                        <p class="text-sm text-slate-500 mt-2">@plan.Description</p>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="material-symbols-outlined text-primary text-lg">check</span>
+                            <span class="text-sm text-slate-700 dark:text-slate-300">Up to <strong>@plan.MaxVenuesAllowed</strong> venues</span>
+                        </div>
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="material-symbols-outlined text-primary text-lg">group</span>
+                            <span class="text-sm text-slate-700 dark:text-slate-300"><strong>@plan.SubscriberCount</strong> active subscribers</span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(plan.Features) && plan.Features != "[]")
+                        {
+                            <div class="pt-4 border-t border-slate-200 dark:border-slate-800">
+                                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider mb-2">Features</p>
+                                <p class="text-sm text-slate-600 dark:text-slate-400 line-clamp-3">@plan.Features</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-span-3 bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center">
+                <span class="material-symbols-outlined text-5xl text-slate-300 mb-3">card_membership</span>
+                <h4 class="text-lg font-bold text-slate-700 dark:text-slate-300 mb-2">No Subscription Plans</h4>
+                <p class="text-slate-500 mb-4">Create your first plan so owners can subscribe and list venues.</p>
+                <button onclick="openPlanModal()" class="bg-primary text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-primary/90">
+                    Create First Plan
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- ==================== ADD / EDIT PLAN MODAL ==================== -->
+<div id="planModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closePlanModal()"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg">
+        <div class="bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 id="planModalTitle" class="text-lg font-bold text-slate-900 dark:text-white">Create Subscription Plan</h3>
+                <button onclick="closePlanModal()" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <input type="hidden" id="editPlanId" value="0" />
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Plan Name *</label>
+                    <input type="text" id="planName" placeholder="e.g., Starter, Professional, Enterprise"
+                           class="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Price (₹) *</label>
+                        <input type="number" id="planPrice" placeholder="999" step="0.01" min="1"
+                               class="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Duration (Days) *</label>
+                        <input type="number" id="planDuration" placeholder="30" min="1"
+                               class="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Max Venues Allowed *</label>
+                    <input type="number" id="planMaxVenues" placeholder="5" min="1"
+                           class="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+                    <textarea id="planDescription" rows="2" placeholder="Brief description of this plan..."
+                              class="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Features (JSON array)</label>
+                    <textarea id="planFeatures" rows="3" placeholder='["Priority Support", "Analytics Dashboard", "Custom Branding"]'
+                              class="w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm font-mono focus:ring-2 focus:ring-primary/20 resize-none"></textarea>
+                    <p class="text-xs text-slate-400 mt-1">Format: ["Feature 1", "Feature 2", "Feature 3"]</p>
+                </div>
+            </div>
+
+            <div id="planModalError" class="hidden mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-600 dark:text-red-400"></div>
+
+            <div class="flex gap-3 mt-6">
+                <button onclick="closePlanModal()" class="flex-1 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    Cancel
+                </button>
+                <button onclick="savePlan()" id="savePlanBtn" class="flex-1 px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/30 transition-colors">
+                    Save Plan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ========== MODAL OPEN / CLOSE ==========
+        function openPlanModal() {
+            document.getElementById('planModalTitle').textContent = 'Create Subscription Plan';
+            document.getElementById('editPlanId').value = '0';
+            document.getElementById('planName').value = '';
+            document.getElementById('planPrice').value = '';
+            document.getElementById('planDuration').value = '';
+            document.getElementById('planMaxVenues').value = '';
+            document.getElementById('planDescription').value = '';
+            document.getElementById('planFeatures').value = '[]';
+            hideError();
+            document.getElementById('planModal').classList.remove('hidden');
+        }
+
+        function openEditModal(id, name, price, duration, maxVenues, description, features) {
+            document.getElementById('planModalTitle').textContent = 'Edit Subscription Plan';
+            document.getElementById('editPlanId').value = id;
+            document.getElementById('planName').value = name;
+            document.getElementById('planPrice').value = price;
+            document.getElementById('planDuration').value = duration;
+            document.getElementById('planMaxVenues').value = maxVenues;
+            document.getElementById('planDescription').value = description;
+            document.getElementById('planFeatures').value = features || '[]';
+            hideError();
+            document.getElementById('planModal').classList.remove('hidden');
+        }
+
+        function closePlanModal() {
+            document.getElementById('planModal').classList.add('hidden');
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('planModalError');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('planModalError').classList.add('hidden');
+        }
+
+        // ========== SAVE (CREATE / UPDATE) ==========
+        function savePlan() {
+            const id = parseInt(document.getElementById('editPlanId').value);
+            const name = document.getElementById('planName').value.trim();
+            const price = parseFloat(document.getElementById('planPrice').value);
+            const duration = parseInt(document.getElementById('planDuration').value);
+            const maxVenues = parseInt(document.getElementById('planMaxVenues').value);
+            const description = document.getElementById('planDescription').value.trim();
+            const features = document.getElementById('planFeatures').value.trim();
+
+            if (!name) { showError('Plan name is required.'); return; }
+            if (!price || price <= 0) { showError('Price must be greater than zero.'); return; }
+            if (!duration || duration <= 0) { showError('Duration must be at least 1 day.'); return; }
+            if (!maxVenues || maxVenues <= 0) { showError('Max venues must be at least 1.'); return; }
+
+            hideError();
+            const btn = document.getElementById('savePlanBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            const isEdit = id > 0;
+            const url = isEdit ? '/Admin/UpdateSubscriptionPlan' : '/Admin/CreateSubscriptionPlan';
+            const body = isEdit
+                ? { planId: id, planName: name, price, durationInDays: duration, maxVenuesAllowed: maxVenues, description, features }
+                : { planName: name, price, durationInDays: duration, maxVenuesAllowed: maxVenues, description, features };
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+            .then(r => r.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.textContent = 'Save Plan';
+                if (data.success) {
+                    location.reload();
+                } else {
+                    showError(data.error || 'Something went wrong.');
+                }
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.textContent = 'Save Plan';
+                showError('Network error. Please try again.');
+            });
+        }
+
+        // ========== TOGGLE STATUS ==========
+        function togglePlanStatus(planId) {
+            if (!confirm('Toggle this plan\'s active status?')) return;
+            fetch(`/Admin/TogglePlanStatus/${planId}`, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) location.reload();
+                    else alert('Failed to toggle status.');
+                });
+        }
+
+        // ========== DELETE ==========
+        function deletePlan(planId, planName) {
+            if (!confirm(`Delete plan "${planName}"?\n\nThis cannot be undone. Plans with active subscribers cannot be deleted.`)) return;
+            fetch(`/Admin/DeleteSubscriptionPlan/${planId}`, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) location.reload();
+                    else alert(data.error || 'Cannot delete this plan.');
+                });
+        }
+    </script>
+}

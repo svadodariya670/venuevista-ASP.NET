@@ -1,0 +1,298 @@
+﻿@model VenueBooking.ViewModels.AdminSettingsViewModel
+@{
+    ViewData["Title"] = "Settings";
+    Layout = "_AdminLayout";
+}
+
+<div class="max-w-[1400px] mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">System Settings</h2>
+        <p class="text-slate-500 mt-1">Configure platform settings and preferences</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Sidebar - Settings Menu -->
+        <div class="lg:col-span-1">
+            <div class="bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <nav class="flex flex-col">
+                    <button onclick="showSection('general')" class="settings-tab active flex items-center gap-3 px-6 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-l-4 border-primary bg-primary/5">
+                        <span class="material-symbols-outlined text-primary">settings</span>
+                        <div>
+                            <p class="font-semibold text-slate-900 dark:text-white">General</p>
+                            <p class="text-xs text-slate-500">Basic platform settings</p>
+                        </div>
+                    </button>
+                    <button onclick="showSection('email')" class="settings-tab flex items-center gap-3 px-6 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-l-4 border-transparent">
+                        <span class="material-symbols-outlined text-slate-400">email</span>
+                        <div>
+                            <p class="font-semibold text-slate-900 dark:text-white">Email</p>
+                            <p class="text-xs text-slate-500">SMTP configuration</p>
+                        </div>
+                    </button>
+                    <button onclick="showSection('payment')" class="settings-tab flex items-center gap-3 px-6 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-l-4 border-transparent">
+                        <span class="material-symbols-outlined text-slate-400">payments</span>
+                        <div>
+                            <p class="font-semibold text-slate-900 dark:text-white">Payment</p>
+                            <p class="text-xs text-slate-500">Payment gateways</p>
+                        </div>
+                    </button>
+                    <button onclick="showSection('security')" class="settings-tab flex items-center gap-3 px-6 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-l-4 border-transparent">
+                        <span class="material-symbols-outlined text-slate-400">security</span>
+                        <div>
+                            <p class="font-semibold text-slate-900 dark:text-white">Security</p>
+                            <p class="text-xs text-slate-500">Auth & security settings</p>
+                        </div>
+                    </button>
+                    <button onclick="showSection('notifications')" class="settings-tab flex items-center gap-3 px-6 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-l-4 border-transparent">
+                        <span class="material-symbols-outlined text-slate-400">notifications</span>
+                        <div>
+                            <p class="font-semibold text-slate-900 dark:text-white">Notifications</p>
+                            <p class="text-xs text-slate-500">Alert preferences</p>
+                        </div>
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Right Content - Settings Forms -->
+        <div class="lg:col-span-2">
+            <!-- General Settings -->
+            <div id="general" class="settings-section">
+                <div class="bg-card-bg dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6">General Settings</h3>
+                    <form asp-action="SaveGeneralSettings" method="post">
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Platform Name</label>
+                                <input type="text" name="PlatformName" value="@Model.PlatformName"
+                                       class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Support Email</label>
+                                <input type="email" name="SupportEmail" value="@Model.SupportEmail"
+                                       class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Timezone</label>
+                                <select name="Timezone" class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20">
+                                    <option value="UTC" selected="@(Model.Timezone == "UTC")">UTC</option>
+                                    <option value="EST" selected="@(Model.Timezone == "EST")">Eastern Time</option>
+                                    <option value="PST" selected="@(Model.Timezone == "PST")">Pacific Time</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center justify-between py-4 border-t border-slate-200 dark:border-slate-800">
+                                <div>
+                                    <p class="font-medium text-slate-900 dark:text-white">Maintenance Mode</p>
+                                    <p class="text-sm text-slate-500">Disable public access</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="MaintenanceMode" class="sr-only peer" @(Model.MaintenanceMode ? "checked" : "")>
+                                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+                            <div class="pt-4">
+                                <button type="submit" class="bg-primary text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-primary/90">
+                                    Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Email Settings -->
+            <div id="email" class="settings-section hidden">
+                <div class="bg-card-bg dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6">Email Configuration</h3>
+                    <form asp-action="SaveEmailSettings" method="post">
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">SMTP Host</label>
+                                <input type="text" name="SmtpHost" value="@Model.SmtpHost"
+                                       class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Port</label>
+                                    <input type="number" name="SmtpPort" value="@Model.SmtpPort"
+                                           class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Encryption</label>
+                                    <select name="SmtpEncryption" class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20">
+                                        <option value="SSL" selected="@(Model.SmtpEncryption == "SSL")">SSL</option>
+                                        <option value="TLS" selected="@(Model.SmtpEncryption == "TLS")">TLS</option>
+                                        <option value="None" selected="@(Model.SmtpEncryption == "None")">None</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">SMTP Username</label>
+                                <input type="text" name="SmtpUsername" value="@Model.SmtpUsername"
+                                       class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">SMTP Password</label>
+                                <input type="password" name="SmtpPassword" value="@Model.SmtpPassword"
+                                       class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                            </div>
+                            <div class="pt-4 flex gap-3">
+                                <button type="button" onclick="testEmail()" class="px-6 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800">
+                                    Test Connection
+                                </button>
+                                <button type="submit" class="bg-primary text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-primary/90">
+                                    Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Payment Settings -->
+            <div id="payment" class="settings-section hidden">
+                <div class="bg-card-bg dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6">Payment Gateways</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-xl">
+                            <div class="flex items-center gap-4">
+                                <div class="size-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-blue-600">credit_card</span>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-900 dark:text-white">Stripe</p>
+                                    <p class="text-sm text-slate-500">Credit/Debit card payments</p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-xl">
+                            <div class="flex items-center gap-4">
+                                <div class="size-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-blue-600">account_balance</span>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-900 dark:text-white">PayPal</p>
+                                    <p class="text-sm text-slate-500">PayPal wallet payments</p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only-peer">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Settings -->
+            <div id="security" class="settings-section hidden">
+                <div class="bg-card-bg dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6">Security Settings</h3>
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between py-4 border-b border-slate-200 dark:border-slate-800">
+                            <div>
+                                <p class="font-medium text-slate-900 dark:text-white">Two-Factor Authentication</p>
+                                <p class="text-sm text-slate-500">Require 2FA for admin accounts</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between py-4 border-b border-slate-200 dark:border-slate-800">
+                            <div>
+                                <p class="font-medium text-slate-900 dark:text-white">Login Notifications</p>
+                                <p class="text-sm text-slate-500">Email on new device login</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Session Timeout (minutes)</label>
+                            <input type="number" value="30"
+                                   class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Settings -->
+            <div id="notifications" class="settings-section hidden">
+                <div class="bg-card-bg dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6">Notification Preferences</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between py-4 border-b border-slate-200 dark:border-slate-800">
+                            <div>
+                                <p class="font-medium text-slate-900 dark:text-white">New Booking Alerts</p>
+                                <p class="text-sm text-slate-500">Email when new booking is made</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between py-4 border-b border-slate-200 dark:border-slate-800">
+                            <div>
+                                <p class="font-medium text-slate-900 dark:text-white">New User Registration</p>
+                                <p class="text-sm text-slate-500">Email when new user signs up</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between py-4">
+                            <div>
+                                <p class="font-medium text-slate-900 dark:text-white">Payment Notifications</p>
+                                <p class="text-sm text-slate-500">Email on successful payments</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.settings-section').forEach(el => {
+                el.classList.add('hidden');
+            });
+
+            // Show selected section
+            document.getElementById(sectionId).classList.remove('hidden');
+
+            // Update tab styles
+            document.querySelectorAll('.settings-tab').forEach(tab => {
+                tab.classList.remove('active', 'border-primary', 'bg-primary/5');
+                tab.classList.add('border-transparent');
+                tab.querySelector('.material-symbols-outlined').classList.remove('text-primary');
+                tab.querySelector('.material-symbols-outlined').classList.add('text-slate-400');
+            });
+
+            // Highlight active tab
+            event.currentTarget.classList.add('active', 'border-primary', 'bg-primary/5');
+            event.currentTarget.classList.remove('border-transparent');
+            event.currentTarget.querySelector('.material-symbols-outlined').classList.add('text-primary');
+            event.currentTarget.querySelector('.material-symbols-outlined').classList.remove('text-slate-400');
+        }
+
+        function testEmail() {
+            alert('Test email sent! Check your inbox.');
+        }
+    </script>
+}

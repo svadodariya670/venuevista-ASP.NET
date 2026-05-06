@@ -1,0 +1,218 @@
+﻿@model VenueBooking.ViewModels.CustomerMessagesPageViewModel
+@{
+    ViewData["Title"] = "Messages";
+    Layout = "_CustomerLayout";
+}
+
+<div class="flex flex-col md:flex-row h-[calc(100vh-140px)] bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <!-- Left Panel: Conversation List -->
+    <div class="w-full md:w-80 border-b md:border-b-0 md:border-r border-slate-200 flex flex-col @(Model.SelectedOwnerId.HasValue ? "hidden md:flex" : "flex")">
+        <div class="p-4 border-b border-slate-100">
+            <h1 class="text-xl font-bold text-slate-900">Messages</h1>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            @if (Model.Conversations.Any())
+            {
+                foreach (var conv in Model.Conversations)
+                {
+                    var isActive = conv.IsSelected;
+                    <a asp-action="Messages" asp-route-ownerId="@conv.OtherUserId"
+                       class="flex items-start gap-3 p-4 border-b border-slate-50 @(isActive ? "bg-primary/5 border-l-4 border-l-primary" : "hover:bg-slate-50 border-l-4 border-l-transparent") transition-all">
+                        <div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                            <span class="material-symbols-outlined text-lg">person</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-start">
+                                <p class="text-sm font-bold truncate text-slate-900">@conv.OtherUserName</p>
+                                <span class="text-[10px] text-slate-400 whitespace-nowrap ml-2">@conv.LastMessageTime.ToString("MMM dd")</span>
+                            </div>
+                            <p class="text-xs text-slate-500 truncate mt-0.5">@conv.LastMessage</p>
+                        </div>
+                        @if (conv.UnreadCount > 0)
+                        {
+                            <span class="size-5 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">@conv.UnreadCount</span>
+                        }
+                    </a>
+                }
+            }
+            else
+            {
+                <div class="p-8 text-center">
+                    <span class="material-symbols-outlined text-4xl text-slate-300">chat</span>
+                    <p class="text-slate-400 mt-2 text-sm">No conversations yet</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Right Panel: Chat -->
+    <div class="flex-1 flex flex-col @(Model.SelectedOwnerId.HasValue ? "flex" : "hidden md:flex")">
+        @if (Model.SelectedOwnerId.HasValue && Model.SelectedOwnerName != null)
+        {
+            <!-- Chat Header -->
+            <div class="h-16 border-b border-slate-200 px-4 sm:px-6 flex items-center gap-3">
+                <a asp-action="Messages" class="md:hidden p-1 text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </a>
+                <div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                    <span class="material-symbols-outlined">person</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm text-slate-900">@Model.SelectedOwnerName</h3>
+                    <p class="text-xs text-slate-400">Venue Owner</p>
+                </div>
+            </div>
+
+            <!-- Messages Area -->
+            <div id="messagesArea" class="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-3 bg-slate-50">
+                @if (Model.Messages.Any())
+                {
+                    string currentDate = null;
+                    foreach (var msg in Model.Messages)
+                    {
+                        var msgDate = msg.SentAt.ToString("MMMM d, yyyy");
+                        if (currentDate != msgDate)
+                        {
+                            currentDate = msgDate;
+                            <div class="flex justify-center my-2">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-white px-3 py-1 rounded-full shadow-sm">@msgDate</span>
+                            </div>
+                        }
+
+                        if (msg.IsFromMe)
+                        {
+                            <div class="flex justify-end max-w-[85%] sm:max-w-[70%] ml-auto">
+                                <div class="bg-primary p-3 rounded-xl rounded-br-none shadow-sm text-white">
+                                    <p class="text-sm leading-relaxed">@msg.Content</p>
+                                    <p class="text-[10px] text-white/60 mt-1 text-right">@msg.SentAt.ToString("hh:mm tt")</p>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="flex gap-2 max-w-[85%] sm:max-w-[70%]">
+                                <div class="size-7 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 self-end">
+                                    <span class="material-symbols-outlined text-sm">person</span>
+                                </div>
+                                <div class="bg-white border border-slate-200 p-3 rounded-xl rounded-bl-none shadow-sm">
+                                    <p class="text-sm leading-relaxed text-slate-800">@msg.Content</p>
+                                    <p class="text-[10px] text-slate-400 mt-1 text-right">@msg.SentAt.ToString("hh:mm tt")</p>
+                                </div>
+                            </div>
+                        }
+                    }
+                }
+                else
+                {
+                    <div class="flex-1 flex items-center justify-center">
+                        <p class="text-slate-400 text-sm">Start the conversation...</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Send Error Banner (hidden by default) -->
+            <div id="sendError" class="hidden px-4 py-2 bg-red-50 border-t border-red-200 text-red-600 text-xs flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">error</span>
+                <span id="sendErrorText">Failed to send message.</span>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="p-3 sm:p-4 bg-white border-t border-slate-200">
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="flex-1">
+                        <input id="messageInput" class="w-full bg-slate-100 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:bg-white transition-colors"
+                               placeholder="Type your message..." type="text" />
+                    </div>
+                    <button onclick="sendMessage()" id="sendBtn" class="bg-primary text-white p-3 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors flex-shrink-0">
+                        <span class="material-symbols-outlined">send</span>
+                    </button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="flex-1 flex flex-col items-center justify-center text-slate-400 p-6">
+                <span class="material-symbols-outlined text-6xl text-slate-200 mb-4">forum</span>
+                <p class="text-lg font-medium">Select a conversation</p>
+                <p class="text-sm mt-1">Choose a chat from the left to start messaging</p>
+            </div>
+        }
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script>
+        // Auto-scroll to bottom
+        const area = document.getElementById('messagesArea');
+        if (area) area.scrollTop = area.scrollHeight;
+
+        function showSendError(msg) {
+            const el = document.getElementById('sendError');
+            document.getElementById('sendErrorText').textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(function () { el.classList.add('hidden'); }, 5000);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+            if (!content) return;
+
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+
+            // Hide previous error
+            document.getElementById('sendError').classList.add('hidden');
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            if (!token) {
+                showSendError('Security token not found. Please refresh the page.');
+                btn.disabled = false;
+                return;
+            }
+
+            fetch('@Url.Action("SendMessage", "Customer")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ receiverId: @(Model.SelectedOwnerId ?? 0), content: content })
+            })
+            .then(function (r) {
+                if (!r.ok) {
+                    throw new Error('Server returned ' + r.status);
+                }
+                return r.json();
+            })
+            .then(function (data) {
+                btn.disabled = false;
+                if (data.success) {
+                    const area = document.getElementById('messagesArea');
+                    const div = document.createElement('div');
+                    div.className = 'flex justify-end max-w-[85%] sm:max-w-[70%] ml-auto';
+                    div.innerHTML = '<div class="bg-primary p-3 rounded-xl rounded-br-none shadow-sm text-white">' +
+                        '<p class="text-sm leading-relaxed">' + data.message.content + '</p>' +
+                        '<p class="text-[10px] text-white/60 mt-1 text-right">Just now</p>' +
+                    '</div>';
+                    area.appendChild(div);
+                    area.scrollTop = area.scrollHeight;
+                    input.value = '';
+                } else {
+                    showSendError(data.error || 'Failed to send message.');
+                }
+            })
+            .catch(function (err) {
+                btn.disabled = false;
+                console.error('Send error:', err);
+                showSendError('Failed to send message. Please try again.');
+            });
+        }
+
+        document.getElementById('messageInput')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+        });
+    </script>
+}

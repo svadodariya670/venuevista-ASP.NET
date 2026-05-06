@@ -1,0 +1,103 @@
+﻿@model VenueBooking.ViewModels.CustomerBookingsViewModel
+@using VenueBooking.Models.Enums
+@{
+    ViewData["Title"] = "My Bookings";
+    Layout = "_CustomerLayout";
+}
+
+<div class="max-w-6xl mx-auto">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">My Bookings</h1>
+            <p class="text-slate-500 mt-1 text-sm">Manage your venue reservations and event details.</p>
+        </div>
+        <div class="flex gap-2 text-sm">
+            <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">Total: @Model.TotalCount</span>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="border-b border-primary/10 mb-6 flex gap-4 sm:gap-8 overflow-x-auto">
+        <a href="@Url.Action("Bookings", new { status = "All" })"
+           class="pb-3 text-sm font-bold tracking-wide uppercase whitespace-nowrap transition-colors @(Model.CurrentFilter == "All" ? "text-primary border-b-2 border-primary" : "text-slate-500 hover:text-primary")">
+            All (@Model.TotalCount)
+        </a>
+        <a href="@Url.Action("Bookings", new { status = BookingStatus.Pending })"
+           class="pb-3 text-sm font-bold tracking-wide uppercase whitespace-nowrap transition-colors @(Model.CurrentFilter == BookingStatus.Pending ? "text-primary border-b-2 border-primary" : "text-slate-500 hover:text-primary")">
+            Pending (@Model.PendingCount)
+        </a>
+        <a href="@Url.Action("Bookings", new { status = BookingStatus.Confirmed })"
+           class="pb-3 text-sm font-bold tracking-wide uppercase whitespace-nowrap transition-colors @(Model.CurrentFilter == BookingStatus.Confirmed ? "text-primary border-b-2 border-primary" : "text-slate-500 hover:text-primary")">
+            Confirmed (@Model.ConfirmedCount)
+        </a>
+        <a href="@Url.Action("Bookings", new { status = BookingStatus.Cancelled })"
+           class="pb-3 text-sm font-bold tracking-wide uppercase whitespace-nowrap transition-colors @(Model.CurrentFilter == BookingStatus.Cancelled ? "text-primary border-b-2 border-primary" : "text-slate-500 hover:text-primary")">
+            Cancelled (@Model.CancelledCount)
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3">
+            <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+            <p class="text-sm font-medium text-emerald-800">@TempData["Success"]</p>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
+            <span class="material-symbols-outlined text-red-600">error</span>
+            <p class="text-sm font-medium text-red-800">@TempData["Error"]</p>
+        </div>
+    }
+
+    @if (!Model.Bookings.Any())
+    {
+        <div class="flex flex-col items-center justify-center py-20 text-center">
+            <div class="size-20 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4">
+                <span class="material-symbols-outlined text-4xl">event_busy</span>
+            </div>
+            <h3 class="text-xl font-bold">No bookings found</h3>
+            <p class="text-slate-500 max-w-xs mt-2">You don't have any bookings in this category yet.</p>
+            <a href="@Url.Action("Index", "Home")" class="mt-6 px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors">Explore Venues</a>
+        </div>
+    }
+    else
+    {
+        <div class="space-y-4">
+            @foreach (var booking in Model.Bookings)
+            {
+                var statusClass = booking.Status switch
+                {
+                    BookingStatus.Confirmed => "bg-emerald-100 text-emerald-700",
+                    BookingStatus.Pending => "bg-amber-100 text-amber-700",
+                    BookingStatus.Cancelled => "bg-red-100 text-red-700",
+                    BookingStatus.Rejected => "bg-red-100 text-red-700",
+                    _ => "bg-slate-100 text-slate-700"
+                };
+                var isCancelled = booking.Status == BookingStatus.Cancelled;
+
+                <a asp-action="BookingDetails" asp-route-id="@booking.BookingId"
+                   class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:shadow-md hover:border-primary/20 transition-all @(isCancelled ? "opacity-70" : "")">
+                    <img src="@booking.CoverImageUrl" class="w-full sm:w-24 h-32 sm:h-20 rounded-lg object-cover flex-shrink-0"
+                         onerror="this.src='/images/default-venue.jpg'" alt="@booking.VenueName" />
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h3 class="text-lg font-bold text-slate-900 truncate">@booking.VenueName</h3>
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold @statusClass">@booking.Status</span>
+                        </div>
+                        <p class="text-sm text-slate-500 mt-1">
+                            @booking.VenueCity · @booking.EventType · @booking.StartDate.ToString("MMM dd, yyyy")
+                        </p>
+                        <p class="text-xs text-slate-400 mt-0.5">Theme: @booking.ThemeName</p>
+                    </div>
+                    <div class="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                        <p class="text-xl font-black text-primary">₹@booking.TotalPrice.ToString("N0")</p>
+                        <p class="text-[10px] text-slate-400 uppercase font-bold">@booking.PaymentStatus</p>
+                    </div>
+                    <span class="material-symbols-outlined text-slate-300 hidden sm:block">chevron_right</span>
+                </a>
+            }
+        </div>
+    }
+</div>

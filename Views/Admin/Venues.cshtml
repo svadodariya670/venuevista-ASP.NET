@@ -1,0 +1,322 @@
+﻿@model VenueBooking.ViewModels.AdminVenuesViewModel
+@{
+    ViewData["Title"] = "Venues Management";
+    Layout = "_AdminLayout";
+}
+
+<div class="max-w-[1400px] mx-auto">
+    <!-- Header -->
+    <div class="mb-8 flex items-end justify-between">
+        <div>
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Venues Management</h2>
+            <p class="text-slate-500 mt-1">Manage all venue listings and approvals</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-lg">
+                    <span class="material-symbols-outlined">location_on</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Total Venues</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalVenues</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg">
+                    <span class="material-symbols-outlined">verified</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Verified</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.VerifiedVenues</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-lg">
+                    <span class="material-symbols-outlined">pending</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Pending Approval</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.PendingVenues</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-lg">
+                    <span class="material-symbols-outlined">block</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Inactive</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.InactiveVenues</h3>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
+        <div class="flex flex-col md:flex-row gap-4 justify-between">
+            <div class="flex gap-4 flex-1">
+                <div class="relative flex-1 max-w-md">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                    <input type="text" id="searchVenues" placeholder="Search venue name, owner or location..."
+                           class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                </div>
+                <select id="statusFilter" onchange="filterByStatus(this.value)"
+                        class="px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20">
+                    <option value="All">All Status</option>
+                    <option value="Verified">Verified</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Venues Table -->
+    <div class="bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4">Venue</th>
+                        <th class="px-6 py-4">Owner</th>
+                        <th class="px-6 py-4">Location</th>
+                        <th class="px-6 py-4">Type</th>
+                        <th class="px-6 py-4">Capacity</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4">Submitted</th>
+                        <th class="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800" id="venueTableBody">
+                    @foreach (var venue in Model.Venues)
+                    {
+                        var statusText = !venue.IsVerified ? "Pending" : venue.IsActive ? "Verified" : "Inactive";
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors venue-row"
+                            data-name="@venue.VenueName.ToLower()"
+                            data-owner="@venue.OwnerName.ToLower()"
+                            data-city="@venue.City.ToLower()"
+                            data-status="@statusText"
+                            data-type="@venue.VenueType">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                        <span class="material-symbols-outlined">location_on</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-900 dark:text-white">@venue.VenueName</p>
+                                        <p class="text-xs text-slate-500">ID: #@venue.VenueId</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-sm text-slate-600 dark:text-slate-300">@venue.OwnerName</p>
+                                <p class="text-xs text-slate-500">@venue.OwnerEmail</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-sm text-slate-600 dark:text-slate-300">@venue.City, @venue.State</p>
+                                <p class="text-xs text-slate-500">@venue.Country</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 rounded-md bg-secondary/10 text-secondary text-xs font-bold">
+                                    @venue.VenueType
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                                @venue.Capacity guests
+                            </td>
+                            <td class="px-6 py-4">
+                                @if (!venue.IsVerified)
+                                {
+                                    <span class="px-2 py-1 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-600 text-xs font-bold">Pending</span>
+                                }
+                                else if (venue.IsActive)
+                                {
+                                    <span class="px-2 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 text-xs font-bold">Verified</span>
+                                }
+                                else
+                                {
+                                    <span class="px-2 py-1 rounded-md bg-red-100 dark:bg-red-900/30 text-red-600 text-xs font-bold">Inactive</span>
+                                }
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-500">
+                                @venue.CreatedAt.ToString("MMM dd, yyyy")
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    <a asp-action="VenueDetails" asp-route-id="@venue.VenueId"
+                                       class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-all" title="View Details">
+                                        <span class="material-symbols-outlined text-lg">visibility</span>
+                                    </a>
+                                    @if (!venue.IsVerified)
+                                    {
+                                        <button onclick="verifyVenue(@venue.VenueId)"
+                                                class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="Approve">
+                                            <span class="material-symbols-outlined text-lg">check_circle</span>
+                                        </button>
+                                        <button onclick="openRejectModal(@venue.VenueId, '@venue.VenueName.Replace("'", "\\'")')"
+                                                class="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all" title="Reject">
+                                            <span class="material-symbols-outlined text-lg">do_not_disturb</span>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button onclick="toggleVenueActive(@venue.VenueId, @(venue.IsActive ? "true" : "false"))"
+                                                class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                title="@(venue.IsActive ? "Deactivate" : "Activate")">
+                                            <span class="material-symbols-outlined text-lg">@(venue.IsActive ? "toggle_on" : "toggle_off")</span>
+                                        </button>
+                                    }
+                                    <button onclick="deleteVenue(@venue.VenueId, '@venue.VenueName.Replace("'", "\\'")')"
+                                            class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete">
+                                        <span class="material-symbols-outlined text-lg">delete</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (!Model.Venues.Any())
+        {
+            <div class="text-center py-12">
+                <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">location_off</span>
+                <p class="text-slate-500">No venues found</p>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div id="rejectModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-slate-900 rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl">
+        <h3 class="text-xl font-bold mb-2 text-slate-900 dark:text-white">Reject Venue</h3>
+        <p class="text-slate-500 text-sm mb-4" id="rejectVenueName"></p>
+        <textarea id="rejectReason" rows="3"
+                  class="w-full px-4 py-2 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary mb-4"
+                  placeholder="Reason for rejection (will be sent to the owner)..." required></textarea>
+        <div class="flex justify-end gap-3">
+            <button onclick="closeRejectModal()" class="px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50">Cancel</button>
+            <button onclick="submitReject()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Reject</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // =============================================
+        // Search filter (client-side)
+        // =============================================
+        document.getElementById('searchVenues').addEventListener('input', function () {
+            var term = this.value.toLowerCase();
+            document.querySelectorAll('.venue-row').forEach(function (row) {
+                var name = row.dataset.name || '';
+                var owner = row.dataset.owner || '';
+                var city = row.dataset.city || '';
+                var match = name.includes(term) || owner.includes(term) || city.includes(term);
+                row.style.display = match ? '' : 'none';
+            });
+        });
+
+        // =============================================
+        // Status filter (server-side reload)
+        // =============================================
+        function filterByStatus(status) {
+            window.location.href = '/Admin/Venues?status=' + encodeURIComponent(status);
+        }
+
+        // =============================================
+        // Approve venue
+        // =============================================
+        function verifyVenue(venueId) {
+            if (confirm('Approve this venue? It will become visible to customers.')) {
+                fetch('/Admin/VerifyVenue/' + venueId, { method: 'POST' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.error || 'Failed to approve venue.');
+                        }
+                    })
+                    .catch(function () { alert('Network error. Please try again.'); });
+            }
+        }
+
+        // =============================================
+        // Reject venue (modal)
+        // =============================================
+        var rejectVenueId = 0;
+
+        function openRejectModal(venueId, venueName) {
+            rejectVenueId = venueId;
+            document.getElementById('rejectVenueName').textContent = 'Rejecting: ' + venueName;
+            document.getElementById('rejectReason').value = '';
+            document.getElementById('rejectModal').classList.remove('hidden');
+            document.getElementById('rejectModal').classList.add('flex');
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModal').classList.add('hidden');
+            document.getElementById('rejectModal').classList.remove('flex');
+            rejectVenueId = 0;
+        }
+
+        function submitReject() {
+            var reason = document.getElementById('rejectReason').value.trim();
+            if (!reason) {
+                alert('Please provide a reason for rejection.');
+                return;
+            }
+            fetch('/Admin/RejectVenue', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ venueId: rejectVenueId, reason: reason })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    closeRejectModal();
+                    location.reload();
+                } else {
+                    alert(data.error || 'Failed to reject venue.');
+                }
+            })
+            .catch(function () { alert('Network error. Please try again.'); });
+        }
+
+        // =============================================
+        // Toggle active/inactive
+        // =============================================
+        function toggleVenueActive(venueId, isCurrentlyActive) {
+            var action = isCurrentlyActive ? 'deactivate' : 'activate';
+            if (confirm('Are you sure you want to ' + action + ' this venue?')) {
+                fetch('/Admin/ToggleVenueActive/' + venueId, { method: 'POST' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.success) location.reload();
+                        else alert('Failed to ' + action + ' venue.');
+                    })
+                    .catch(function () { alert('Network error.'); });
+            }
+        }
+
+        // =============================================
+        // Delete venue
+        // =============================================
+        function deleteVenue(venueId, venueName) {
+            if (confirm('Delete "' + venueName + '"? This action cannot be undone.')) {
+                fetch('/Admin/DeleteVenue/' + venueId, { method: 'POST' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.success) location.reload();
+                        else alert(data.error || 'Failed to delete venue.');
+                    })
+                    .catch(function () { alert('Network error.'); });
+            }
+        }
+    </script>
+}

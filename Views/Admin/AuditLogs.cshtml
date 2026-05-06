@@ -1,0 +1,174 @@
+﻿@model VenueBooking.ViewModels.AdminAuditLogsViewModel
+@{
+    ViewData["Title"] = "Audit Logs";
+    Layout = "_AdminLayout";
+}
+
+<div class="max-w-[1400px] mx-auto">
+    <!-- Header -->
+    <div class="mb-8 flex items-end justify-between">
+        <div>
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Audit Logs</h2>
+            <p class="text-slate-500 mt-1">Track all system activities and changes</p>
+        </div>
+        <button class="bg-primary text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/30 hover:bg-primary/90 flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg">download</span>
+            Export Logs
+        </button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
+                    <span class="material-symbols-outlined">history_edu</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Total Logs</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalLogs</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg">
+                    <span class="material-symbols-outlined">add_circle</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Created</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.CreatedLogs</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-lg">
+                    <span class="material-symbols-outlined">edit</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Updated</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.UpdatedLogs</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-lg">
+                    <span class="material-symbols-outlined">delete</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Deleted</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.DeletedLogs</h3>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
+        <div class="flex flex-col md:flex-row gap-4 justify-between">
+            <div class="flex gap-4 flex-1">
+                <div class="relative flex-1 max-w-md">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                    <input type="text" id="searchLogs" placeholder="Search by user or table..."
+                           class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                </div>
+                <select id="actionFilter" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20">
+                    <option value="All">All Actions</option>
+                    <option value="INSERT">Create</option>
+                    <option value="UPDATE">Update</option>
+                    <option value="DELETE">Delete</option>
+                </select>
+                <select id="tableFilter" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20">
+                    <option value="All">All Tables</option>
+                    <option value="Users">Users</option>
+                    <option value="Venues">Venues</option>
+                    <option value="Bookings">Bookings</option>
+                    <option value="Payments">Payments</option>
+                </select>
+                <input type="date" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4">Timestamp</th>
+                        <th class="px-6 py-4">User</th>
+                        <th class="px-6 py-4">Action</th>
+                        <th class="px-6 py-4">Table</th>
+                        <th class="px-6 py-4">Record ID</th>
+                        <th class="px-6 py-4">Changes</th>
+                        <th class="px-6 py-4 text-right">Details</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                    @foreach (var log in Model.Logs)
+                    {
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <td class="px-6 py-4">
+                                <p class="text-sm font-medium text-slate-900 dark:text-white">@log.ChangedAt.ToString("MMM dd, yyyy")</p>
+                                <p class="text-xs text-slate-500">@log.ChangedAt.ToString("HH:mm:ss")</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="size-8 rounded-full bg-secondary/10 text-secondary flex items-center justify-center font-bold text-xs">
+                                        @log.UserInitials
+                                    </div>
+                                    <span class="text-sm font-semibold text-slate-900 dark:text-white">@log.UserName</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 rounded-md text-xs font-bold
+                                        @(log.Action == "CREATE" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600" :
+                                                                            log.Action == "UPDATE" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" :
+                                                                            log.Action == "DELETE" ? "bg-red-100 dark:bg-red-900/30 text-red-600" :
+                                                                            "bg-slate-100 dark:bg-slate-800 text-slate-600")">
+                                @log.Action
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                            @log.TableName
+                        </td>
+                        <td class="px-6 py-4 text-sm font-mono text-slate-500">
+                            #@log.RecordId
+                        </td>
+                        <td class="px-6 py-4">
+                            <p class="text-sm text-slate-600 dark:text-slate-300 truncate max-w-xs">
+                                @(string.IsNullOrEmpty(log.Changes) ? "No changes recorded" : log.Changes)
+                            </p>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="viewLogDetails(@log.LogId)" class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-all">
+                                <span class="material-symbols-outlined text-lg">visibility</span>
+                            </button>
+                        </td>
+                    </tr>
+                                        }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <p class="text-sm text-slate-500">Showing @Model.Logs.Count of @Model.TotalLogs logs</p>
+            <div class="flex gap-2">
+                <a asp-action="AuditLogs" asp-route-page="@(Model.CurrentPage - 1)"
+                   class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 @(Model.CurrentPage == 1 ? "opacity-50 pointer-events-none" : "")">
+                    Previous
+                </a>
+                <span class="px-3 py-1 rounded-lg bg-primary text-white text-sm">@Model.CurrentPage</span>
+                <a asp-action="AuditLogs" asp-route-page="@(Model.CurrentPage + 1)"
+                   class="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 @(Model.CurrentPage >= Model.TotalPages ? "opacity-50 pointer-events-none" : "")">
+                    Next
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function viewLogDetails(logId) {
+            // Implement modal to show old vs new values
+            alert('View details for log: ' + logId);
+        }
+    </script>
+}

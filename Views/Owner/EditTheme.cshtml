@@ -1,0 +1,397 @@
+﻿@model VenueBooking.ViewModels.EditThemeViewModel
+
+@{
+    ViewData["Title"] = "Edit Theme";
+    Layout = "_OwnerLayout";
+    var venues = ViewBag.Venues as IEnumerable<dynamic> ?? new List<dynamic>();
+    var eventTypes = new List<string> { "Marriage", "Engagement", "Birthday", "Corporate", "Party", "Other" };
+}
+
+<div class="max-w-4xl mx-auto">
+    <div class="flex items-center gap-4 mb-8">
+        <a asp-action="Themes" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+            <span class="material-symbols-outlined text-slate-600">arrow_back</span>
+        </a>
+        <div>
+            <h2 class="text-3xl font-bold text-slate-900">Edit Theme: @Model.ThemeName</h2>
+        </div>
+    </div>
+
+    <!-- Pass Razor values to JS via data attributes -->
+    <div id="razorData"
+         data-pricing-count="@Model.Pricings.Count"
+         data-existing-image-count="@Model.ExistingImages.Count"
+         data-event-types="@Html.Raw(Json.Serialize(eventTypes))"
+         class="hidden"></div>
+
+    <form asp-action="EditTheme" method="post" enctype="multipart/form-data" class="space-y-8" id="editThemeForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="ThemeId" />
+        <div asp-validation-summary="ModelOnly" class="bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6"></div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center gap-2">
+                <span class="material-symbols-outlined">check_circle</span>
+                @TempData["Success"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2">
+                <span class="material-symbols-outlined">error</span>
+                @TempData["Error"]
+            </div>
+        }
+
+        <!-- Venue Selection -->
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">location_on</span>
+                Venue
+            </h3>
+            <div class="mb-4">
+                <label asp-for="VenueId" class="block text-sm font-medium mb-2">Select Venue *</label>
+                <select asp-for="VenueId" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary">
+                    @foreach (var venue in venues)
+                    {
+                        <option value="@venue.VenueId" selected="@(venue.VenueId == Model.VenueId)">@venue.VenueName</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <!-- Basic Info -->
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">info</span>
+                Theme Information
+            </h3>
+            <div class="mb-4">
+                <label asp-for="ThemeName" class="block text-sm font-medium mb-2">Theme Name *</label>
+                <input asp-for="ThemeName" class="w-full px-4 py-2.5 rounded-lg border-slate-200" />
+                <span asp-validation-for="ThemeName" class="text-red-500 text-sm"></span>
+            </div>
+            <div class="mb-4">
+                <label asp-for="Description" class="block text-sm font-medium mb-2">Description</label>
+                <textarea asp-for="Description" rows="4" class="w-full px-4 py-2.5 rounded-lg border-slate-200"></textarea>
+            </div>
+            <div class="flex gap-6">
+                <label class="flex items-center gap-2">
+                    <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-primary rounded" />
+                    <span class="text-sm">Active</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input asp-for="IsDefault" type="checkbox" class="w-4 h-4 text-primary rounded" />
+                    <span class="text-sm">Default</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Pricing -->
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">payments</span>
+                Pricing
+            </h3>
+            <div id="pricing-list">
+                @for (int i = 0; i < Model.Pricings.Count; i++)
+                {
+                    <div class="pricing-item grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 border rounded-lg">
+                        <input type="hidden" asp-for="Pricings[i].PricingId" />
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Event Type</label>
+                            <select asp-for="Pricings[i].EventType" class="w-full px-4 py-2 rounded-lg border-slate-200">
+                                @foreach (var type in eventTypes)
+                                {
+                                    <option value="@type">@type</option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Price per Day (₹)</label>
+                            <input asp-for="Pricings[i].PricePerDay" type="number" step="0.01" class="w-full px-4 py-2 rounded-lg border-slate-200" />
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-2">
+                                <input asp-for="Pricings[i].IsActive" type="checkbox" class="w-4 h-4" />
+                                <span class="text-sm">Active</span>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-end">
+                            <button type="button" class="text-red-600 hover:text-red-800" onclick="removePricing(this)">Remove</button>
+                        </div>
+                    </div>
+                }
+            </div>
+            <button type="button" id="add-pricing" class="px-4 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50">
+                + Add Pricing
+            </button>
+        </div>
+
+        <!-- Existing Images -->
+        @if (Model.ExistingImages.Any())
+        {
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <h3 class="text-lg font-bold mb-2 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">photo_library</span>
+                    Current Images (@Model.ExistingImages.Count)
+                </h3>
+                <p class="text-sm text-slate-500 mb-4">Hover and tick the checkbox to mark images for deletion. Changes apply on save.</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="existingImagesGrid">
+                    @foreach (var img in Model.ExistingImages)
+                    {
+                        <div class="relative group rounded-lg overflow-hidden border border-slate-200" id="existing-img-@img.ImageId">
+                            <img src="@img.ImageUrl" class="w-full h-32 object-cover" alt="Theme image" />
+                            @if (img.IsCover)
+                            {
+                                <span class="absolute top-2 left-2 px-2 py-1 bg-primary text-white text-xs rounded font-medium">Cover</span>
+                            }
+                            <div class="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <label class="flex items-center gap-2 cursor-pointer bg-white/90 px-3 py-2 rounded-lg">
+                                    <input type="checkbox" name="ImagesToDelete" value="@img.ImageId"
+                                           class="w-4 h-4 text-red-500 delete-checkbox"
+                                           onchange="toggleDeleteMark(this, @img.ImageId)" />
+                                    <span class="text-sm font-medium text-red-600">Delete</span>
+                                </label>
+                            </div>
+                            <!-- Red overlay when marked for deletion -->
+                            <div class="absolute inset-0 bg-red-500/30 border-2 border-red-500 rounded-lg pointer-events-none hidden" id="delete-overlay-@img.ImageId"></div>
+                        </div>
+                    }
+                </div>
+                <p class="text-xs text-slate-400 mt-3" id="deleteCountLabel">0 images marked for deletion</p>
+            </div>
+        }
+
+        <!-- New Images (accumulated uploads) -->
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">add_photo_alternate</span>
+                Add New Images
+            </h3>
+            <p class="text-sm text-slate-500 mb-4">Upload up to 10 total images (existing + new − deleted). You can add images in multiple selections.</p>
+
+            <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-primary transition-colors" id="dropZone">
+                <div class="size-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-3xl text-primary">cloud_upload</span>
+                </div>
+                <p class="text-slate-700 font-medium mb-2">Drag & drop new images here or click to browse</p>
+                <p class="text-slate-400 text-sm mb-4">JPG, PNG, WebP up to 5MB each</p>
+                <!-- Picker input (opens dialog, not submitted) -->
+                <input type="file" id="imagePickerInput" multiple accept=".jpg,.jpeg,.png,.webp" class="hidden">
+                <!-- Real form input synced via JS -->
+                <input type="file" name="NewImages" id="imageFormInput" multiple accept=".jpg,.jpeg,.png,.webp" class="hidden">
+                <button type="button" onclick="document.getElementById('imagePickerInput').click()" class="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors">
+                    Select Images
+                </button>
+                <p class="text-xs text-slate-400 mt-3" id="imageCountLabel">0 new images selected</p>
+            </div>
+
+            <!-- New Image Previews -->
+            <div id="newImagePreview" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-6"></div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex items-center justify-end gap-4 pt-4">
+            <a asp-action="Themes" class="px-8 py-3 border border-slate-200 rounded-lg font-semibold text-slate-600 hover:bg-slate-50">Cancel</a>
+            <button type="submit" class="px-8 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-all shadow-md shadow-primary/20 flex items-center gap-2">
+                <span class="material-symbols-outlined">save</span>
+                Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // =============================================
+        // Read Razor values from data attributes
+        // =============================================
+        const razorData = document.getElementById('razorData');
+        let pricingIndex = parseInt(razorData.dataset.pricingCount) || 0;
+        const existingImageCount = parseInt(razorData.dataset.existingImageCount) || 0;
+        const eventTypes = JSON.parse(razorData.dataset.eventTypes || '[]');
+
+        // =============================================
+        // Dynamic Pricing
+        // =============================================
+        document.getElementById('add-pricing').addEventListener('click', function () {
+            const list = document.getElementById('pricing-list');
+            let options = '';
+            eventTypes.forEach(t => options += `<option value="${t}">${t}</option>`);
+            const template = `
+                <div class="pricing-item grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 border rounded-lg">
+                    <input type="hidden" name="Pricings[${pricingIndex}].PricingId" value="" />
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Event Type</label>
+                        <select name="Pricings[${pricingIndex}].EventType" class="w-full px-4 py-2 rounded-lg border-slate-200">
+                            ${options}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Price per Day (₹)</label>
+                        <input name="Pricings[${pricingIndex}].PricePerDay" type="number" step="0.01" class="w-full px-4 py-2 rounded-lg border-slate-200" />
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <input type="hidden" name="Pricings[${pricingIndex}].IsActive" value="false" />
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="Pricings[${pricingIndex}].IsActive" value="true" class="w-4 h-4" checked />
+                            <span class="text-sm">Active</span>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-end">
+                        <button type="button" class="text-red-600 hover:text-red-800" onclick="removePricing(this)">Remove</button>
+                    </div>
+                </div>
+            `;
+            list.insertAdjacentHTML('beforeend', template);
+            pricingIndex++;
+        });
+
+        function removePricing(button) {
+            button.closest('.pricing-item').remove();
+        }
+
+        // =============================================
+        // Existing image deletion UI
+        // =============================================
+        function toggleDeleteMark(checkbox, imageId) {
+            const overlay = document.getElementById('delete-overlay-' + imageId);
+            if (checkbox.checked) {
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
+            updateDeleteCount();
+        }
+
+        function updateDeleteCount() {
+            const checked = document.querySelectorAll('.delete-checkbox:checked').length;
+            document.getElementById('deleteCountLabel').textContent =
+                checked > 0 ? `${checked} image(s) marked for deletion` : '0 images marked for deletion';
+        }
+
+        // =============================================
+        // New image upload with accumulation (max 10 total)
+        // =============================================
+        const MAX_IMAGES = 10;
+        const MAX_FILE_SIZE = 5 * 1024 * 1024;
+        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+        let selectedFiles = [];
+
+        const pickerInput = document.getElementById('imagePickerInput');
+        const formInput = document.getElementById('imageFormInput');
+        const previewContainer = document.getElementById('newImagePreview');
+        const dropZone = document.getElementById('dropZone');
+        const countLabel = document.getElementById('imageCountLabel');
+
+        pickerInput.addEventListener('change', (e) => {
+            addFiles(Array.from(e.target.files));
+            pickerInput.value = '';
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-primary', 'bg-primary/5');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-primary', 'bg-primary/5');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-primary', 'bg-primary/5');
+            addFiles(Array.from(e.dataTransfer.files));
+        });
+
+        function getRemainingExistingCount() {
+            const deletingCount = document.querySelectorAll('.delete-checkbox:checked').length;
+            return existingImageCount - deletingCount;
+        }
+
+        function addFiles(newFiles) {
+            for (const file of newFiles) {
+                const totalAfterAdd = getRemainingExistingCount() + selectedFiles.length + 1;
+                if (totalAfterAdd > MAX_IMAGES) {
+                    alert(`Maximum ${MAX_IMAGES} total images allowed (existing + new − deleted). Extra images were ignored.`);
+                    break;
+                }
+                if (!ALLOWED_TYPES.includes(file.type)) {
+                    alert(`"${file.name}" is not supported. Use JPG, PNG, or WebP.`);
+                    continue;
+                }
+                if (file.size > MAX_FILE_SIZE) {
+                    alert(`"${file.name}" is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Max 5 MB.`);
+                    continue;
+                }
+                const isDuplicate = selectedFiles.some(f =>
+                    f.name === file.name && f.size === file.size && f.lastModified === file.lastModified
+                );
+                if (isDuplicate) continue;
+
+                selectedFiles.push(file);
+            }
+            syncFormInput();
+            renderPreviews();
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            syncFormInput();
+            renderPreviews();
+        }
+
+        function syncFormInput() {
+            const dt = new DataTransfer();
+            selectedFiles.forEach(f => dt.items.add(f));
+            formInput.files = dt.files;
+            countLabel.textContent = `${selectedFiles.length} new image(s) selected`;
+        }
+
+        function renderPreviews() {
+            previewContainer.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const div = document.createElement('div');
+                    div.className = 'relative group';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-32 object-cover rounded-lg border border-slate-200" alt="${file.name}">
+                        <div class="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+                            <span class="text-white text-xs font-medium">${(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                            <button type="button" onclick="removeFile(${index})"
+                                class="mt-1 px-2 py-1 bg-red-500 text-white text-xs rounded-md hover:bg-red-600 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">delete</span> Remove
+                            </button>
+                        </div>
+                        <span class="absolute top-2 right-2 px-2 py-1 bg-emerald-500 text-white text-xs rounded font-medium">New</span>
+                    `;
+                    previewContainer.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // =============================================
+        // Form validation
+        // =============================================
+        document.getElementById('editThemeForm').addEventListener('submit', function (e) {
+            const remaining = getRemainingExistingCount();
+            const total = remaining + selectedFiles.length;
+
+            if (total === 0) {
+                e.preventDefault();
+                alert('At least one image is required. Either keep an existing image or upload a new one.');
+                return false;
+            }
+            if (total > MAX_IMAGES) {
+                e.preventDefault();
+                alert(`Maximum ${MAX_IMAGES} total images allowed. You have ${remaining} existing + ${selectedFiles.length} new = ${total}.`);
+                return false;
+            }
+        });
+    </script>
+}

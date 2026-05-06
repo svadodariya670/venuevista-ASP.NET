@@ -1,0 +1,295 @@
+@model VenueBooking.ViewModels.AdminAmenitiesViewModel
+@{
+    ViewData["Title"] = "Amenities Management";
+    Layout = "_AdminLayout";
+}
+
+<div class="max-w-[1400px] mx-auto">
+    <!-- Header -->
+    <div class="mb-8 flex items-end justify-between">
+        <div>
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Amenities Management</h2>
+            <p class="text-slate-500 mt-1">Manage amenities that owners can assign to their venues</p>
+        </div>
+        <button onclick="openAddModal()" class="bg-primary text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/30 hover:bg-primary/90 flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg">add</span>
+            Add Amenity
+        </button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-primary/10 text-primary rounded-lg">
+                    <span class="material-symbols-outlined">check_circle</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Total Amenities</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalAmenities</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
+                    <span class="material-symbols-outlined">category</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Categories</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalCategories</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg">
+                    <span class="material-symbols-outlined">paid</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Chargeable Amenities</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.ChargeableAmenities</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-lg">
+                    <span class="material-symbols-outlined">location_on</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Venues Using Amenities</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.VenuesUsingAmenities</h3>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
+        <div class="flex flex-col md:flex-row gap-4 justify-between">
+            <div class="flex gap-4 flex-1">
+                <div class="relative flex-1 max-w-md">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                    <input type="text" id="searchAmenities" placeholder="Search amenities..."
+                           class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                </div>
+                <select id="categoryFilter" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20">
+                    <option value="All">All Categories</option>
+                    @foreach (var cat in Model.Categories)
+                    {
+                        <option value="@cat">@cat</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Amenities Table -->
+    <div class="bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4">Amenity</th>
+                        <th class="px-6 py-4">Category</th>
+                        <th class="px-6 py-4">Icon</th>
+                        <th class="px-6 py-4">Venues Using</th>
+                        <th class="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                    @if (Model.Amenities.Any())
+                    {
+                        @foreach (var amenity in Model.Amenities)
+                        {
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors" data-category="@amenity.Category">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                                            <span class="material-symbols-outlined">@(string.IsNullOrEmpty(amenity.Icon) ? "check_circle" : amenity.Icon)</span>
+                                        </div>
+                                        <span class="text-sm font-bold text-slate-900 dark:text-white">@amenity.Name</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 rounded-md text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                        @(string.IsNullOrEmpty(amenity.Category) ? "General" : amenity.Category)
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <code class="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-600 dark:text-slate-400">@(string.IsNullOrEmpty(amenity.Icon) ? "check_circle" : amenity.Icon)</code>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm font-semibold text-slate-900 dark:text-white">@amenity.VenueCount</span>
+                                    <span class="text-xs text-slate-500 ml-1">venues</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button onclick="openEditModal(@amenity.AmenityId, '@amenity.Name.Replace("'", "\\'")' , '@(string.IsNullOrEmpty(amenity.Icon) ? "check_circle" : amenity.Icon)', '@(string.IsNullOrEmpty(amenity.Category) ? "General" : amenity.Category)')"
+                                                class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit">
+                                            <span class="material-symbols-outlined text-lg">edit</span>
+                                        </button>
+                                        <button onclick="deleteAmenity(@amenity.AmenityId, '@amenity.Name.Replace("'", "\\'")')"
+                                                class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete">
+                                            <span class="material-symbols-outlined text-lg">delete</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center">
+                                <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">check_circle</span>
+                                <p class="text-slate-500">No amenities found. Click "Add Amenity" to create one.</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+            <p class="text-sm text-slate-500">Showing @Model.Amenities.Count amenities</p>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="amenityModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50" onclick="closeModal()"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
+        <div class="bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 id="modalTitle" class="text-lg font-bold text-slate-900 dark:text-white">Add Amenity</h3>
+                <button onclick="closeModal()" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <input type="hidden" id="editAmenityId" value="0" />
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name *</label>
+                    <input type="text" id="amenityName" placeholder="e.g., Wi-Fi, Parking, AC"
+                           class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Icon (Material Symbol name)</label>
+                    <input type="text" id="amenityIcon" placeholder="e.g., wifi, local_parking, ac_unit"
+                           class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                    <p class="text-xs text-slate-400 mt-1">Browse icons at <a href="https://fonts.google.com/icons" target="_blank" class="text-primary hover:underline">fonts.google.com/icons</a></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category</label>
+                    <input type="text" id="amenityCategory" placeholder="e.g., Technology, Comfort, Safety"
+                           class="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+                </div>
+                <div id="iconPreview" class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                    <div class="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                        <span class="material-symbols-outlined" id="previewIcon">check_circle</span>
+                    </div>
+                    <span class="text-sm font-medium text-slate-700 dark:text-slate-300" id="previewName">Preview</span>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeModal()" class="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800">
+                    Cancel
+                </button>
+                <button onclick="saveAmenity()" class="flex-1 px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/30">
+                    Save Amenity
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Live icon preview
+        document.getElementById('amenityIcon').addEventListener('input', function () {
+            document.getElementById('previewIcon').textContent = this.value || 'check_circle';
+        });
+        document.getElementById('amenityName').addEventListener('input', function () {
+            document.getElementById('previewName').textContent = this.value || 'Preview';
+        });
+
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'Add Amenity';
+            document.getElementById('editAmenityId').value = '0';
+            document.getElementById('amenityName').value = '';
+            document.getElementById('amenityIcon').value = '';
+            document.getElementById('amenityCategory').value = '';
+            document.getElementById('previewIcon').textContent = 'check_circle';
+            document.getElementById('previewName').textContent = 'Preview';
+            document.getElementById('amenityModal').classList.remove('hidden');
+        }
+
+        function openEditModal(id, name, icon, category) {
+            document.getElementById('modalTitle').textContent = 'Edit Amenity';
+            document.getElementById('editAmenityId').value = id;
+            document.getElementById('amenityName').value = name;
+            document.getElementById('amenityIcon').value = icon;
+            document.getElementById('amenityCategory').value = category;
+            document.getElementById('previewIcon').textContent = icon || 'check_circle';
+            document.getElementById('previewName').textContent = name || 'Preview';
+            document.getElementById('amenityModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('amenityModal').classList.add('hidden');
+        }
+
+        function saveAmenity() {
+            const id = parseInt(document.getElementById('editAmenityId').value);
+            const name = document.getElementById('amenityName').value.trim();
+            const icon = document.getElementById('amenityIcon').value.trim();
+            const category = document.getElementById('amenityCategory').value.trim();
+
+            if (!name) { alert('Name is required.'); return; }
+
+            const url = id > 0 ? '/Admin/UpdateAmenity' : '/Admin/CreateAmenity';
+            const body = id > 0
+                ? { amenityId: id, name, icon, category }
+                : { name, icon, category };
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'Something went wrong.');
+                }
+            });
+        }
+
+        function deleteAmenity(id, name) {
+            if (!confirm(`Delete amenity "${name}"? This cannot be undone.`)) return;
+            fetch(`/Admin/DeleteAmenity/${id}`, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) location.reload();
+                    else alert(data.error || 'Cannot delete this amenity.');
+                });
+        }
+
+        // Client-side search
+        document.getElementById('searchAmenities').addEventListener('input', function () {
+            const term = this.value.toLowerCase();
+            document.querySelectorAll('tbody tr').forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+
+        // Category filter
+        document.getElementById('categoryFilter').addEventListener('change', function () {
+            const cat = this.value;
+            document.querySelectorAll('tbody tr').forEach(row => {
+                if (cat === 'All' || row.dataset.category === cat) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    </script>
+}

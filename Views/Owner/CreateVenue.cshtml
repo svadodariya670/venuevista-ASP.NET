@@ -1,0 +1,346 @@
+﻿@model VenueBooking.ViewModels.CreateVenueViewModel
+@{
+    ViewData["Title"] = "Create New Venue";
+    Layout = "_OwnerLayout";
+    var amenities = ViewBag.Amenities as List<VenueBooking.Models.Amenity> ?? new List<VenueBooking.Models.Amenity>();
+    var venueTypes = ViewBag.VenueTypes as List<string> ?? new List<string>();
+}
+
+<div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="flex items-center gap-4 mb-8">
+        <a asp-action="Venues" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+            <span class="material-symbols-outlined text-slate-600">arrow_back</span>
+        </a>
+        <div>
+            <h2 class="text-3xl font-bold text-slate-900">Create New Venue</h2>
+            <p class="text-slate-500 mt-1">Add your venue details and start receiving bookings</p>
+        </div>
+    </div>
+
+    <form asp-action="CreateVenue" method="post" enctype="multipart/form-data" class="space-y-8" id="createVenueForm">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6"></div>
+
+        <!-- Basic Information -->
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">info</span>
+                Basic Information
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                    <label asp-for="VenueName" class="block text-sm font-medium text-slate-700 mb-2">Venue Name *</label>
+                    <input asp-for="VenueName" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary" placeholder="Enter venue name">
+                    <span asp-validation-for="VenueName" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="VenueType" class="block text-sm font-medium text-slate-700 mb-2">Venue Type *</label>
+                    <select asp-for="VenueType" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary">
+                        <option value="">Select venue type</option>
+                        @foreach (var type in venueTypes)
+                        {
+                            <option value="@type">@type</option>
+                        }
+                    </select>
+                    <span asp-validation-for="VenueType" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Capacity" class="block text-sm font-medium text-slate-700 mb-2">Capacity (Guests) *</label>
+                    <input asp-for="Capacity" type="number" min="1" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary" placeholder="e.g., 500">
+                    <span asp-validation-for="Capacity" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label asp-for="Description" class="block text-sm font-medium text-slate-700 mb-2">Description</label>
+                    <textarea asp-for="Description" rows="4" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary" placeholder="Describe your venue, features, specialities..."></textarea>
+                    <span asp-validation-for="Description" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="ContactPhone" class="block text-sm font-medium text-slate-700 mb-2">Contact Phone</label>
+                    <input asp-for="ContactPhone" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary" placeholder="+91 98765 43210">
+                    <span asp-validation-for="ContactPhone" class="text-red-500 text-sm"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Location -->
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">location_on</span>
+                Location Details
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                    <label asp-for="Address" class="block text-sm font-medium text-slate-700 mb-2">Full Address *</label>
+                    <textarea asp-for="Address" rows="3" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary" placeholder="Street address, landmark..."></textarea>
+                    <span asp-validation-for="Address" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="City" class="block text-sm font-medium text-slate-700 mb-2">City *</label>
+                    <input asp-for="City" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary" placeholder="e.g., Mumbai">
+                    <span asp-validation-for="City" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="State" class="block text-sm font-medium text-slate-700 mb-2">State</label>
+                    <input asp-for="State" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary" placeholder="e.g., Maharashtra">
+                </div>
+
+                <div>
+                    <label asp-for="Country" class="block text-sm font-medium text-slate-700 mb-2">Country</label>
+                    <input asp-for="Country" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary bg-slate-50" readonly value="India">
+                </div>
+
+                <div class="md:col-span-2 bg-slate-50 p-4 rounded-lg">
+                    <p class="text-sm font-medium text-slate-700 mb-2">Map Coordinates (Optional)</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label asp-for="Latitude" class="block text-xs text-slate-500 mb-1">Latitude</label>
+                            <input asp-for="Latitude" type="number" step="any" class="w-full px-3 py-2 rounded-lg border-slate-200 focus:ring-primary focus:border-primary" placeholder="19.0760">
+                        </div>
+                        <div>
+                            <label asp-for="Longitude" class="block text-xs text-slate-500 mb-1">Longitude</label>
+                            <input asp-for="Longitude" type="number" step="any" class="w-full px-3 py-2 rounded-lg border-slate-200 focus:ring-primary focus:border-primary" placeholder="72.8777">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Amenities -->
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">check_circle</span>
+                Amenities
+            </h3>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                @foreach (var amenity in amenities)
+                {
+                    <div class="amenity-item border border-slate-200 rounded-lg p-3 hover:border-primary transition-colors cursor-pointer" onclick="toggleAmenity(@amenity.AmenityId)">
+                        <div class="flex items-start gap-3">
+                            <input type="checkbox" name="SelectedAmenities" value="@amenity.AmenityId" id="amenity_@amenity.AmenityId" class="amenity-checkbox mt-1 w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary">
+                            <div class="flex-1">
+                                <label for="amenity_@amenity.AmenityId" class="font-medium text-sm text-slate-700 cursor-pointer block">@amenity.Name</label>
+                                @if (!string.IsNullOrEmpty(amenity.Category))
+                                {
+                                    <span class="text-xs text-slate-400">@amenity.Category</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="mt-2 amenity-price hidden">
+                            <input type="number" name="AmenityPrices[@amenity.AmenityId]" step="0.01" class="w-full px-2 py-1 text-sm rounded border-slate-200 focus:ring-primary focus:border-primary" placeholder="Price (optional)">
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (!amenities.Any())
+            {
+                <p class="text-slate-500 text-center py-4">No amenities available. Contact admin to add amenities.</p>
+            }
+        </div>
+
+        <!-- Images (Max 7 images) -->
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">image</span>
+                Venue Images *
+            </h3>
+            <p class="text-sm text-slate-500 mb-6">Upload up to 7 images. The first image will be the cover. You can add images in multiple selections.</p>
+
+            <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-primary transition-colors" id="dropZone">
+                <div class="size-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-3xl text-primary">cloud_upload</span>
+                </div>
+                <p class="text-slate-700 font-medium mb-2">Drag & drop images here or click to browse</p>
+                <p class="text-slate-400 text-sm mb-4">JPG, PNG, WebP up to 5MB each (Max 7 images)</p>
+                <!-- Hidden file input used only to open the picker; files are accumulated in JS -->
+                <input type="file" id="imagePickerInput" multiple accept=".jpg,.jpeg,.png,.webp" class="hidden">
+                <!-- This is the real input that will be submitted with the form -->
+                <input type="file" name="Images" id="imageFormInput" multiple accept=".jpg,.jpeg,.png,.webp" class="hidden">
+                <button type="button" onclick="document.getElementById('imagePickerInput').click()" class="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors">
+                    Select Images
+                </button>
+                <p class="text-xs text-slate-400 mt-3" id="imageCountLabel">0 / 7 images selected</p>
+            </div>
+            <span asp-validation-for="Images" class="text-red-500 text-sm block mt-2"></span>
+
+            <!-- Image Preview -->
+            <div id="imagePreview" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mt-6"></div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex items-center justify-end gap-4 pt-4">
+            <a asp-action="Venues" class="px-8 py-3 border border-slate-200 rounded-lg font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+                Cancel
+            </a>
+            <button type="submit" class="px-8 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-all shadow-md shadow-primary/20 flex items-center gap-2">
+                <span class="material-symbols-outlined">save</span>
+                Create Venue
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Amenity selection with price toggle
+        function toggleAmenity(id) {
+            const checkbox = document.getElementById('amenity_' + id);
+            const priceDiv = checkbox.closest('.amenity-item').querySelector('.amenity-price');
+
+            if (checkbox.checked) {
+                priceDiv.classList.remove('hidden');
+            } else {
+                priceDiv.classList.add('hidden');
+                priceDiv.querySelector('input').value = '';
+            }
+        }
+
+        // =============================================
+        // Multi-image upload with accumulation (max 7)
+        // =============================================
+        const MAX_IMAGES = 7;
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+        // This array holds the accumulated File objects across multiple picks
+        let selectedFiles = [];
+
+        const pickerInput = document.getElementById('imagePickerInput');
+        const formInput = document.getElementById('imageFormInput');
+        const previewContainer = document.getElementById('imagePreview');
+        const dropZone = document.getElementById('dropZone');
+        const countLabel = document.getElementById('imageCountLabel');
+
+        // When the user picks files via the browse button
+        pickerInput.addEventListener('change', (e) => {
+            addFiles(Array.from(e.target.files));
+            // Reset so the same file(s) can be re-selected if removed
+            pickerInput.value = '';
+        });
+
+        // Drag and drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-primary', 'bg-primary/5');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-primary', 'bg-primary/5');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-primary', 'bg-primary/5');
+            addFiles(Array.from(e.dataTransfer.files));
+        });
+
+        /**
+         * Validates and adds files to the selectedFiles array,
+         * then syncs the hidden form input and refreshes the preview.
+         */
+        function addFiles(newFiles) {
+            for (const file of newFiles) {
+                // Check max count
+                if (selectedFiles.length >= MAX_IMAGES) {
+                    alert(`Maximum ${MAX_IMAGES} images allowed. Extra images were ignored.`);
+                    break;
+                }
+
+                // Validate type
+                if (!ALLOWED_TYPES.includes(file.type)) {
+                    alert(`"${file.name}" is not a supported format. Use JPG, PNG, or WebP.`);
+                    continue;
+                }
+
+                // Validate size
+                if (file.size > MAX_FILE_SIZE) {
+                    alert(`"${file.name}" is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Max 5 MB.`);
+                    continue;
+                }
+
+                // Avoid exact duplicate (same name + size + last modified)
+                const isDuplicate = selectedFiles.some(f =>
+                    f.name === file.name && f.size === file.size && f.lastModified === file.lastModified
+                );
+                if (isDuplicate) continue;
+
+                selectedFiles.push(file);
+            }
+
+            syncFormInput();
+            renderPreviews();
+        }
+
+        /**
+         * Removes a file by index from the accumulated list.
+         */
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            syncFormInput();
+            renderPreviews();
+        }
+
+        /**
+         * Copies the accumulated File objects into the real
+         * form <input type="file"> using a DataTransfer object
+         * so ASP.NET model binding receives them on submit.
+         */
+        function syncFormInput() {
+            const dt = new DataTransfer();
+            selectedFiles.forEach(f => dt.items.add(f));
+            formInput.files = dt.files;
+            countLabel.textContent = `${selectedFiles.length} / ${MAX_IMAGES} images selected`;
+        }
+
+        /**
+         * Renders thumbnail previews with a remove button and a "Cover" badge.
+         */
+        function renderPreviews() {
+            previewContainer.innerHTML = '';
+
+            selectedFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const div = document.createElement('div');
+                    div.className = 'relative group';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-32 object-cover rounded-lg border border-slate-200" alt="${file.name}">
+                        <div class="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+                            <span class="text-white text-xs font-medium">${(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                            <button type="button" onclick="removeFile(${index})"
+                                class="mt-1 px-2 py-1 bg-red-500 text-white text-xs rounded-md hover:bg-red-600 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">delete</span> Remove
+                            </button>
+                        </div>
+                        ${index === 0 ? '<span class="absolute top-2 left-2 px-2 py-1 bg-primary text-white text-xs rounded font-medium">Cover</span>' : ''}
+                    `;
+                    previewContainer.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Form validation
+        document.getElementById('createVenueForm').addEventListener('submit', function (e) {
+            if (selectedFiles.length === 0) {
+                e.preventDefault();
+                alert('Please select at least one image.');
+                return false;
+            }
+            if (selectedFiles.length > MAX_IMAGES) {
+                e.preventDefault();
+                alert(`You can only upload up to ${MAX_IMAGES} images.`);
+                return false;
+            }
+        });
+    </script>
+}

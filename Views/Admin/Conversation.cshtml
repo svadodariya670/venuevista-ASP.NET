@@ -1,0 +1,135 @@
+@model VenueBooking.ViewModels.AdminConversationViewModel
+@{
+    ViewData["Title"] = "Conversation — Booking #" + Model.BookingId;
+    Layout = "_AdminLayout";
+}
+
+@Html.AntiForgeryToken()
+
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="flex items-center gap-4 mb-6">
+        <a asp-action="Messages" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </a>
+        <div>
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Booking #@Model.BookingId</h2>
+            <p class="text-sm text-slate-500">@Model.VenueName — @Model.CustomerName ? @Model.OwnerName</p>
+        </div>
+    </div>
+
+    <!-- Messages Thread -->
+    <div class="bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="max-h-[60vh] overflow-y-auto p-6 space-y-4 custom-scrollbar" id="messageThread">
+            @if (!Model.Messages.Any())
+            {
+                <div class="text-center py-12">
+                    <span class="material-symbols-outlined text-5xl text-slate-300 mb-4">chat_bubble_outline</span>
+                    <p class="text-slate-500">No messages in this conversation yet</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var msg in Model.Messages)
+                {
+                    var isAdmin = msg.SenderRole == "Admin";
+                    <div class="flex @(isAdmin ? "justify-end" : "justify-start")">
+                        <div class="max-w-[75%]">
+                            <div class="flex items-center gap-2 mb-1 @(isAdmin ? "justify-end" : "")">
+                                <span class="text-xs font-semibold @(isAdmin ? "text-primary" : "text-slate-600 dark:text-slate-400")">@msg.SenderName</span>
+                                <span class="px-1.5 py-0.5 text-[9px] font-bold rounded-full
+                                            @(msg.SenderRole == "Owner" ? "bg-blue-100 text-blue-700" :
+                                                                            msg.SenderRole == "Customer" ? "bg-green-100 text-green-700" :
+                                                                            "bg-primary/10 text-primary")">
+                            @msg.SenderRole
+                        </span>
+                    </div>
+                    <div class="px-4 py-3 rounded-2xl text-sm @(isAdmin
+                                                         ? "bg-primary text-white rounded-br-md"
+                                                         : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-bl-md")">
+                        @msg.Content
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1 @(isAdmin ? "text-right" : "")">
+                        @msg.SentAt.ToString("MMM dd, yyyy hh:mm tt")
+                    </p>
+                </div>
+            </div>
+                        }
+            }
+        </div>
+
+        <!-- Reply Box -->
+        <div class="border-t border-slate-200 dark:border-slate-800 p-4">
+            <div class="flex items-center gap-2 mb-3">
+                <label class="text-sm font-medium text-slate-600 dark:text-slate-400">Reply to:</label>
+                <select id="receiverId" class="text-sm bg-slate-100 dark:bg-slate-800 border-none rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-primary/20">
+                    @if (Model.Messages.Any())
+                    {
+                        var participants = Model.Messages
+                        .Where(m => m.SenderRole != "Admin")
+                        .Select(m => new { m.SenderId, m.SenderName, m.SenderRole })
+                        .DistinctBy(p => p.SenderId)
+                        .ToList();
+                        @foreach (var p in participants)
+                        {
+                            <option value="@p.SenderId">@p.SenderName (@p.SenderRole)</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="flex gap-3">
+                <input type="text" id="replyContent" placeholder="Type your message..."
+                       class="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm placeholder-slate-500 focus:ring-2 focus:ring-primary/20" />
+                <button onclick="sendReply()" class="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg">send</span>
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var thread = document.getElementById('messageThread');
+        if (thread) thread.scrollTop = thread.scrollHeight;
+
+        var csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        function sendReply() {
+            var content = document.getElementById('replyContent').value.trim();
+            var receiverId = document.getElementById('receiverId').value;
+            if (!content) { alert('Please type a message.'); return; }
+            if (!receiverId) { alert('No recipient selected.'); return; }
+
+            fetch('/Admin/SendMessage', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': csrfToken
+                },
+                body: JSON.stringify({
+                    bookingId: @Model.BookingId,
+                    receiverId: parseInt(receiverId),
+                    content: content
+                })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'Failed to send message.');
+                }
+            })
+            .catch(function () { alert('Network error. Please try again.'); });
+        }
+
+        document.getElementById('replyContent').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendReply();
+            }
+        });
+    </script>
+}

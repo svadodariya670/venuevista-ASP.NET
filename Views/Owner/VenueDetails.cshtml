@@ -1,0 +1,246 @@
+﻿@model VenueBooking.ViewModels.VenueDetailsViewModel
+
+@{
+    ViewData["Title"] = "Venue Details";
+    Layout = "_OwnerLayout";
+}
+
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="flex items-center gap-4 mb-8">
+        <a asp-action="Venues" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+            <span class="material-symbols-outlined text-slate-600">arrow_back</span>
+        </a>
+        <div>
+            <h2 class="text-3xl font-bold text-slate-900">@Model.VenueName</h2>
+            <p class="text-slate-500 mt-1">View complete details of your venue</p>
+        </div>
+    </div>
+
+    <!-- Status Badges -->
+    <div class="flex gap-3 mb-6">
+        <span class="px-3 py-1 rounded-full text-sm font-medium @(Model.IsActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")">
+            @(Model.IsActive ? "Active" : "Inactive")
+        </span>
+        <span class="px-3 py-1 rounded-full text-sm font-medium @(Model.IsVerified ? "bg-blue-100 text-blue-700" : "bg-yellow-100 text-yellow-700")">
+            @(Model.IsVerified ? "Verified" : "Pending Verification")
+        </span>
+    </div>
+
+    <!-- Main Info Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column: Basic Info -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Description Card -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">description</span>
+                    Description
+                </h3>
+                <p class="text-slate-600 whitespace-pre-line">@(string.IsNullOrEmpty(Model.Description) ? "No description provided." : Model.Description)</p>
+            </div>
+
+            <!-- Details Card -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">info</span>
+                    Details
+                </h3>
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <dt class="text-sm text-slate-500">Venue Type</dt>
+                        <dd class="text-lg font-medium">@Model.VenueType</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm text-slate-500">Capacity</dt>
+                        <dd class="text-lg font-medium">@Model.Capacity guests</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm text-slate-500">Contact Phone</dt>
+                        <dd class="text-lg font-medium">@(Model.ContactPhone ?? "Not provided")</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm text-slate-500">Added On</dt>
+                        <dd class="text-lg font-medium">@Model.CreatedAt.ToString("dd MMM yyyy")</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm text-slate-500">Last Updated</dt>
+                        <dd class="text-lg font-medium">@Model.UpdatedAt.ToString("dd MMM yyyy")</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <!-- Location Card -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">location_on</span>
+                    Location
+                </h3>
+                <p class="text-slate-600">
+                    @Model.Address<br>
+                    @Model.City, @Model.State, @Model.Country
+                </p>
+                @if (Model.Latitude.HasValue && Model.Longitude.HasValue)
+                {
+                    <div class="mt-4 h-64 bg-slate-100 rounded-lg overflow-hidden">
+                        <iframe width="100%"
+                                height="100%"
+                                frameborder="0"
+                                style="border:0"
+                                src="https://www.google.com/maps?q=@Model.Latitude,@Model.Longitude&hl=en&z=14&output=embed"
+                                allowfullscreen>
+                        </iframe>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Right Column: Quick Stats -->
+        <div class="space-y-6">
+            <!-- Stats Card -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">analytics</span>
+                    Stats
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-600">Total Images</span>
+                        <span class="text-2xl font-bold text-primary">@Model.Images.Count</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-600">Themes Available</span>
+                        <span class="text-2xl font-bold text-primary">@Model.Themes.Count</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">settings</span>
+                    Actions
+                </h3>
+                <div class="space-y-3">
+                    <a asp-action="EditVenue" asp-route-id="@Model.VenueId" class="w-full px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">edit</span>
+                        Edit Venue
+                    </a>
+                    <button onclick="toggleStatus(@Model.VenueId)" class="w-full px-4 py-2 border border-slate-200 rounded-lg font-medium text-slate-600 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">toggle_off</span>
+                        @(Model.IsActive ? "Deactivate" : "Activate")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Images Gallery -->
+    <div class="mt-8 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">image</span>
+            Venue Images (@Model.Images.Count)
+        </h3>
+        @if (Model.Images.Any())
+        {
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                @foreach (var image in Model.Images)
+                {
+                    <div class="relative group rounded-lg overflow-hidden border border-slate-200">
+                        <img src="@image.ImageUrl" alt="Venue image" class="w-full h-48 object-cover">
+                        @if (image.IsCover)
+                        {
+                            <span class="absolute top-2 left-2 px-2 py-1 bg-primary text-white text-xs rounded">Cover</span>
+                        }
+                        <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span class="text-white text-sm">@(image.Caption ?? "Venue image")</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-slate-500 text-center py-8">No images available for this venue.</p>
+        }
+    </div>
+
+    <!-- Themes List -->
+    <div class="mt-8 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">palette</span>
+            Available Themes (@Model.Themes.Count)
+        </h3>
+        @if (Model.Themes.Any())
+        {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @foreach (var theme in Model.Themes)
+                {
+                    <div class="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-lg">@theme.ThemeName</h4>
+                            @if (theme.IsActive)
+                            {
+                                <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Active</span>
+                            }
+                            else
+                            {
+                                <span class="px-2 py-1 bg-slate-100 text-slate-500 text-xs rounded-full">Inactive</span>
+                            }
+                        </div>
+                        <p class="text-slate-600 text-sm mb-3">@(theme.Description ?? "No description")</p>
+                        @if (theme.Price.HasValue)
+                        {
+                            <p class="text-primary font-semibold">
+                                ₹ @theme.Price.Value.ToString("N0")
+                                @if (!string.IsNullOrEmpty(theme.EventType))
+                                {
+                                    <span class="text-xs text-slate-500 font-normal">(for @theme.EventType)</span>
+                                }
+                            </p>
+                        }
+                        else
+                        {
+                            <p class="text-slate-400 text-sm">Price not set</p>
+                        }
+                        @if (theme.IsDefault)
+                        {
+                            <span class="mt-2 inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">Default</span>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-slate-500 text-center py-8">No themes added for this venue yet.</p>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleStatus(id) {
+            if (!confirm('Are you sure you want to change the status of this venue?')) return;
+
+            fetch('/Owner/ToggleVenueStatus/' + id, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed to update status');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred');
+            });
+        }
+    </script>
+}

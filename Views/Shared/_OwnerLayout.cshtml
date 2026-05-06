@@ -1,0 +1,194 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Venue Vista Owner</title>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,100..700,0..1&display=swap" rel="stylesheet" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#C65D3B",
+                        secondary: "#4A5D52",
+                        "background-light": "#FDF8F3",
+                        "background-dark": "#1F1613",
+                        "text-main": "#2C2C2C",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        heading: ["Poppins", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { 
+            font-family: 'Inter', 'Noto Sans', 'Segoe UI', 'Segoe UI Symbol', system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; 
+            background-color: #FDF8F3; 
+            color: #2C2C2C; 
+        }
+        h1, h2, h3, h4 { font-family: 'Poppins', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="bg-background-light text-text-main">
+    @{
+        var currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
+        var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
+    }
+
+    <div class="flex min-h-screen">
+        <!-- Mobile Overlay -->
+        <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleOwnerSidebar()"></div>
+
+        <!-- Sidebar -->
+        <aside id="ownerSidebar" class="fixed inset-y-0 left-0 w-64 bg-white border-r border-slate-100 z-50 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+            <div class="p-6 flex flex-col h-full">
+                <!-- Logo -->
+                <div class="flex items-center justify-between mb-10">
+                    <div class="flex items-center gap-3">
+                        <div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
+                            <span class="material-symbols-outlined">corporate_fare</span>
+                        </div>
+                        <div>
+                            <h1 class="text-lg font-bold leading-none text-primary">Venue Vista</h1>
+                            <p class="text-xs text-slate-500 font-medium">Owner Dashboard</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleOwnerSidebar()" class="lg:hidden p-1 text-slate-400 hover:text-slate-600">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <!-- Navigation -->
+                <nav class="flex-1 space-y-1 overflow-y-auto">
+                    <a asp-controller="Owner" asp-action="Dashboard"
+                       class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors @(currentAction == "Dashboard" ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-50")">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <span class="font-semibold">Dashboard</span>
+                    </a>
+
+                    <a asp-controller="Owner" asp-action="Venues"
+                       class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors @(currentAction == "Venues" || currentAction == "CreateVenue" || currentAction == "EditVenue" ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-50")">
+                        <span class="material-symbols-outlined">map</span>
+                        <span class="font-medium">My Venues</span>
+                        @if (ViewBag.VenueCount != null && (int)ViewBag.VenueCount > 0)
+                        {
+                            <span class="ml-auto bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-full">@ViewBag.VenueCount</span>
+                        }
+                    </a>
+
+                    <a asp-controller="Owner" asp-action="Bookings"
+                       class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors @(currentAction == "Bookings" || currentAction == "BookingDetails" ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-50")">
+                        <span class="material-symbols-outlined">event_upcoming</span>
+                        <span class="font-medium">Bookings</span>
+                        @if (ViewBag.PendingBookingCount != null && (int)ViewBag.PendingBookingCount > 0)
+                        {
+                            <span class="ml-auto bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full">@ViewBag.PendingBookingCount</span>
+                        }
+                    </a>
+
+                    <a asp-controller="Owner" asp-action="Themes"
+                       class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors @(currentAction == "Themes" || currentAction == "CreateTheme" || currentAction == "EditTheme" ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-50")">
+                        <span class="material-symbols-outlined">palette</span>
+                        <span class="font-medium">Themes</span>
+                    </a>
+
+                    <a asp-controller="Owner" asp-action="Subscription"
+                       class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors @(currentAction == "Subscription" || currentAction == "SubscriptionPayment" ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-50")">
+                        <span class="material-symbols-outlined">sell</span>
+                        <span class="font-medium">Subscription</span>
+                        @if (ViewBag.SubscriptionDaysLeft != null && (int)ViewBag.SubscriptionDaysLeft <= 7 && (int)ViewBag.SubscriptionDaysLeft > 0)
+                        {
+                            <span class="ml-auto bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">!</span>
+                        }
+                    </a>
+
+                    <a asp-controller="Owner" asp-action="Reviews"
+                       class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors @(currentAction == "Reviews" ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-50")">
+                        <span class="material-symbols-outlined">star</span>
+                        <span class="font-medium">Reviews</span>
+                    </a>
+
+                    <a asp-controller="Owner" asp-action="Messages"
+                       class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors @(currentAction == "Messages" || currentAction == "Conversation" ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-50")">
+                        <span class="material-symbols-outlined">chat_bubble</span>
+                        <span class="font-medium">Messages</span>
+                        @if (ViewBag.UnreadMessageCount != null && (int)ViewBag.UnreadMessageCount > 0)
+                        {
+                            <span class="ml-auto bg-primary text-white text-xs px-2 py-0.5 rounded-full">@ViewBag.UnreadMessageCount</span>
+                        }
+                    </a>
+
+                    <a asp-controller="Owner" asp-action="Settings"
+                       class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors @(currentAction == "Settings" ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-50")">
+                        <span class="material-symbols-outlined">settings</span>
+                        <span class="font-medium">Settings</span>
+                    </a>
+
+                    <a asp-controller="Owner" asp-action="BlockDates"
+                       class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors @(currentAction == "BlockDates" ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-50")">
+                        <span class="material-symbols-outlined">block</span>
+                        <span class="font-medium">Blocked Dates</span>
+                    </a>
+                </nav>
+
+                <!-- Logout -->
+                <div class="mt-auto pt-6 border-t border-slate-100">
+                    <form asp-controller="Auth" asp-action="Logout" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                            <span class="material-symbols-outlined">logout</span>
+                            <span class="font-medium">Logout</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="lg:ml-64 flex-1 min-h-screen w-full">
+            <!-- Mobile Header -->
+            <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 sm:px-6 lg:px-8 py-4 lg:hidden">
+                <div class="flex items-center justify-between">
+                    <button onclick="toggleOwnerSidebar()" class="p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <h2 class="text-lg font-bold text-text-main">@ViewData["Title"]</h2>
+                    <div class="w-10"></div>
+                </div>
+            </header>
+
+            <div class="p-4 sm:p-6 lg:p-8">
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function toggleOwnerSidebar() {
+            const sidebar = document.getElementById('ownerSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

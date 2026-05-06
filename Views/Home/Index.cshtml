@@ -1,0 +1,150 @@
+﻿@model VenueBooking.ViewModels.HomePageViewModel
+@{
+    ViewData["Title"] = "Home";
+}
+
+<!-- Hero Section -->
+<section class="relative h-[600px] w-full overflow-hidden">
+    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
+         style="background-image: linear-gradient(to bottom, rgba(44,44,44,0.4), rgba(44,44,44,0.7)), url('https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&q=80&w=2000');">
+    </div>
+    <div class="relative flex h-full flex-col items-center justify-center px-6 text-center">
+        <h2 class="max-w-4xl font-display text-5xl font-extrabold leading-[1.1] text-white md:text-6xl lg:text-7xl">
+            Find the Perfect Space for <span class="text-primary">Your Special Moments</span>
+        </h2>
+        <p class="mt-6 max-w-2xl text-lg font-medium text-white/90 md:text-xl">
+            Discover and book premium event spaces for your next big celebration with ease and elegance. Register now to unlock full access to our curated venues.
+        </p>
+
+        <!-- Call to Action Buttons -->
+        <div class="mt-12 flex flex-col sm:flex-row gap-4">
+            <a href="/Auth/Register" class="m-1 flex h-14 items-center justify-center gap-2 rounded-lg bg-primary px-10 font-bold text-white hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all md:h-16">
+                Get Started
+            </a>
+            <a href="/Auth/Login" class="m-1 flex h-14 items-center justify-center gap-2 rounded-lg bg-white/20 backdrop-blur-md px-10 font-bold text-white border border-white/30 hover:bg-white/30 transition-all md:h-16">
+                Sign In
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Venues (Dynamic) -->
+<section class="mx-auto max-w-7xl px-6 py-20">
+    <div class="mb-12 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+            <span class="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary">Handpicked</span>
+            <h3 class="mt-2 text-3xl font-black text-text-main dark:text-white md:text-4xl font-display">Featured Venues</h3>
+            <p class="mt-2 text-sm text-slate-500">Sign in to view full details and book these exclusive spaces.</p>
+        </div>
+        <!-- Link updated to Search -->
+        <a href="/Home/Search" class="flex items-center gap-2 text-sm font-bold text-primary hover:underline">
+            View all venues <span class="material-symbols-outlined text-sm">arrow_forward</span>
+        </a>
+    </div>
+
+    @if (Model.FeaturedVenues != null && Model.FeaturedVenues.Any())
+    {
+        <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            @foreach (var venue in Model.FeaturedVenues)
+            {
+                <!-- Venue Card -->
+                <a href="/Home/VenueDetails/@venue.VenueId" class="group flex flex-col overflow-hidden rounded-xl border border-slate-100 bg-white transition-all hover:shadow-xl dark:border-slate-800 dark:bg-background-dark/50 block h-full">
+                    <div class="relative h-64 shrink-0 overflow-hidden bg-slate-100">
+                        <img alt="@venue.VenueName" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" src="@venue.CoverImageUrl" onerror="this.src='/images/default-venue.jpg'" />
+                        <div class="absolute top-4 left-4 rounded-lg bg-white/90 px-3 py-1 text-xs font-bold text-primary shadow-sm backdrop-blur-sm">@venue.City</div>
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span class="bg-primary text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm">lock</span> Login to Book
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-6 flex flex-col flex-1">
+                        <div class="flex items-start justify-between gap-2">
+                            <h4 class="text-xl font-bold text-text-main dark:text-white font-display line-clamp-1">@venue.VenueName</h4>
+                            <div class="flex items-center gap-1 text-yellow-500 shrink-0">
+                                <span class="material-symbols-outlined fill-current text-sm">star</span>
+                                <span class="text-sm font-bold">@venue.AverageRating.ToString("0.0")</span>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex flex-wrap gap-4 border-b border-slate-100 pb-4 dark:border-slate-800 mb-4">
+                            <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                                <span class="material-symbols-outlined text-lg">groups</span>
+                                <span class="text-sm font-medium">@venue.Capacity Guests</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                                <span class="material-symbols-outlined text-lg">apartment</span>
+                                <span class="text-sm font-medium">@venue.VenueType</span>
+                            </div>
+                        </div>
+                        <div class="mt-auto flex items-center justify-between">
+                            <div>
+                                <span class="text-2xl font-black text-primary">₹@venue.StartingPrice.ToString("N0")</span>
+                                <span class="text-sm text-slate-400">/day</span>
+                            </div>
+                            <!-- Book Now Button (triggers Auth login redirect loop securely) -->
+                            <span class="rounded-lg bg-secondary px-4 py-2 text-sm font-bold text-white hover:bg-secondary/90 transition-all flex items-center gap-1">
+                                Book Now <span class="material-symbols-outlined text-sm">lock</span>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl p-12 text-center">
+            <span class="material-symbols-outlined text-5xl text-slate-300 mb-4">location_off</span>
+            <h4 class="text-lg font-bold text-slate-700">No venues available yet</h4>
+            <p class="text-slate-500">Owners are setting up their venues. Check back shortly!</p>
+        </div>
+    }
+</section>
+
+<!-- How It Works -->
+<section class="bg-primary/5 py-24 dark:bg-slate-900/40">
+    <div class="mx-auto max-w-7xl px-6 text-center">
+        <h3 class="text-3xl font-black text-text-main dark:text-white md:text-4xl font-display">How It Works</h3>
+        <p class="mx-auto mt-4 max-w-2xl text-slate-500 dark:text-slate-400">
+            Plan your perfect event in three easy steps.
+        </p>
+        <div class="mt-16 grid grid-cols-1 gap-12 md:grid-cols-3">
+            <div class="relative flex flex-col items-center">
+                <div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-white shadow-lg dark:bg-background-dark">
+                    <span class="material-symbols-outlined text-4xl text-primary">manage_search</span>
+                </div>
+                <h4 class="mt-6 text-xl font-bold dark:text-white font-display">Register & Search</h4>
+                <p class="mt-2 px-4 text-sm text-slate-500 dark:text-slate-400">Join our platform to browse curated venues with advanced filters.</p>
+            </div>
+            <div class="relative flex flex-col items-center">
+                <div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-white shadow-lg dark:bg-background-dark">
+                    <span class="material-symbols-outlined text-4xl text-primary">visibility</span>
+                </div>
+                <h4 class="mt-6 text-xl font-bold dark:text-white font-display">Connect</h4>
+                <p class="mt-2 px-4 text-sm text-slate-500 dark:text-slate-400">Chat with owners and schedule physical or virtual tours.</p>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-white shadow-lg dark:bg-background-dark">
+                    <span class="material-symbols-outlined text-4xl text-primary">event_available</span>
+                </div>
+                <h4 class="mt-6 text-xl font-bold dark:text-white font-display">Book securely</h4>
+                <p class="mt-2 px-4 text-sm text-slate-500 dark:text-slate-400">Secure your date instantly with trusted owners.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="mx-auto max-w-7xl px-6 py-20">
+    <div class="relative overflow-hidden rounded-3xl bg-secondary px-8 py-16 text-center text-white md:px-12">
+        <div class="absolute top-0 right-0 -mr-24 -mt-24 h-64 w-64 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative z-10 mx-auto max-w-2xl">
+            <h3 class="text-3xl font-black md:text-4xl leading-tight font-display">Ready to host your next big event?</h3>
+            <p class="mt-4 text-lg text-white/80">Join thousands of venue owners and event planners.</p>
+            <div class="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
+                <a href="/Auth/JoinNow" class="bg-primary px-8 py-4 font-bold transition-all hover:bg-primary/90 rounded-lg">List Your Venue</a>
+                <a href="/Auth/Register" class="border border-white/30 bg-white/10 px-8 py-4 font-bold backdrop-blur-sm transition-all hover:bg-white/20 rounded-lg">Join as Customer</a>
+            </div>
+        </div>
+    </div>
+</section>

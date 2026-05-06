@@ -1,0 +1,194 @@
+﻿@model List<VenueBooking.Models.Booking>
+@using VenueBooking.Models.Enums
+@{
+    ViewData["Title"] = "Bookings";
+    Layout = "_OwnerLayout";
+}
+
+@Html.AntiForgeryToken()
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">Bookings</h2>
+            <p class="text-slate-500 mt-1 text-sm">Manage your venue bookings</p>
+        </div>
+        <select id="statusFilter" class="px-4 py-2 rounded-lg border-slate-200 focus:ring-primary text-sm w-full sm:w-auto">
+            <option value="all">All Status</option>
+            <option value="@BookingStatus.Pending">Pending</option>
+            <option value="@BookingStatus.Contacted">Contacted</option>
+            <option value="@BookingStatus.Confirmed">Confirmed</option>
+            <option value="@BookingStatus.Rejected">Rejected</option>
+        </select>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200">
+            <p class="text-sm text-slate-500">Total</p>
+            <p class="text-2xl font-bold text-slate-900">@Model.Count</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200">
+            <p class="text-sm text-slate-500">Pending</p>
+            <p class="text-2xl font-bold text-yellow-600">@Model.Count(b => b.Status == BookingStatus.Pending)</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200">
+            <p class="text-sm text-slate-500">Confirmed</p>
+            <p class="text-2xl font-bold text-green-600">@Model.Count(b => b.Status == BookingStatus.Confirmed)</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200">
+            <p class="text-sm text-slate-500">This Month</p>
+            <p class="text-2xl font-bold text-primary">@Model.Count(b => b.StartDate.Month == DateTime.Now.Month)</p>
+        </div>
+    </div>
+
+    <!-- Mobile Card View -->
+    <div class="lg:hidden space-y-4">
+        @foreach (var booking in Model)
+        {
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 booking-row" data-status="@booking.Status">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="font-semibold text-slate-900">@booking.Customer?.Name</div>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold uppercase
+                        @(booking.Status == BookingStatus.Confirmed ? "bg-green-100 text-green-700" :
+                          booking.Status == BookingStatus.Pending ? "bg-yellow-100 text-yellow-700" :
+                          booking.Status == BookingStatus.Contacted ? "bg-blue-100 text-blue-700" :
+                          booking.Status == BookingStatus.Rejected ? "bg-red-100 text-red-700" :
+                          "bg-slate-100 text-slate-700")">@booking.Status</span>
+                </div>
+                <p class="text-sm text-slate-600">@booking.Venue?.VenueName · @booking.EventType</p>
+                <div class="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
+                    <div>
+                        <p class="text-sm font-medium">@booking.StartDate.ToString("MMM dd, yyyy")</p>
+                        <p class="text-lg font-bold text-primary">₹@booking.TotalPrice.ToString("N0")</p>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <a asp-action="BookingDetails" asp-route-id="@booking.BookingId" class="p-2 text-primary hover:bg-primary/10 rounded-lg">
+                            <span class="material-symbols-outlined text-xl">visibility</span>
+                        </a>
+                        @if (booking.Status == BookingStatus.Pending || booking.Status == BookingStatus.Contacted)
+                        {
+                            <form asp-action="ConfirmBooking" asp-route-id="@booking.BookingId" method="post" class="inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="p-2 text-green-600 hover:bg-green-50 rounded-lg" onclick="return confirm('Confirm this booking?')">
+                                    <span class="material-symbols-outlined text-xl">check_circle</span>
+                                </button>
+                            </form>
+                            <button onclick="showRejectModal(@booking.BookingId)" class="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                                <span class="material-symbols-outlined text-xl">cancel</span>
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Desktop Table -->
+    <div class="hidden lg:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-slate-700">Customer</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-slate-700">Venue</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-slate-700">Event Date</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-slate-700">Type</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-slate-700">Amount</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-slate-700">Status</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-slate-700">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @foreach (var booking in Model)
+                    {
+                        <tr class="hover:bg-slate-50 booking-row" data-status="@booking.Status">
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-slate-900">@booking.Customer?.Name</div>
+                                <div class="text-sm text-slate-500">@booking.Customer?.Phone</div>
+                            </td>
+                            <td class="px-6 py-4 text-slate-700">@booking.Venue?.VenueName</td>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-slate-900">@booking.StartDate.ToString("MMM dd, yyyy")</div>
+                                <div class="text-sm text-slate-500">@booking.StartDate.ToString("ddd")</div>
+                            </td>
+                            <td class="px-6 py-4 text-slate-700">@booking.EventType</td>
+                            <td class="px-6 py-4 font-medium text-slate-900">₹@booking.TotalPrice.ToString("N0")</td>
+                            <td class="px-6 py-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase
+                                    @(booking.Status == BookingStatus.Confirmed ? "bg-green-100 text-green-700" :
+                                      booking.Status == BookingStatus.Pending ? "bg-yellow-100 text-yellow-700" :
+                                      booking.Status == BookingStatus.Contacted ? "bg-blue-100 text-blue-700" :
+                                      booking.Status == BookingStatus.Rejected ? "bg-red-100 text-red-700" :
+                                      "bg-slate-100 text-slate-700")">@booking.Status</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <a asp-action="BookingDetails" asp-route-id="@booking.BookingId" class="p-2 text-primary hover:bg-primary/10 rounded-lg" title="View">
+                                        <span class="material-symbols-outlined">visibility</span>
+                                    </a>
+                                    @if (booking.Status == BookingStatus.Pending || booking.Status == BookingStatus.Contacted)
+                                    {
+                                        <form asp-action="ConfirmBooking" asp-route-id="@booking.BookingId" method="post" class="inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="p-2 text-green-600 hover:bg-green-50 rounded-lg" title="Confirm" onclick="return confirm('Confirm this booking?')">
+                                                <span class="material-symbols-outlined">check_circle</span>
+                                            </button>
+                                        </form>
+                                        <button onclick="showRejectModal(@booking.BookingId)" class="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Reject">
+                                            <span class="material-symbols-outlined">cancel</span>
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (!Model.Any())
+        {
+            <div class="text-center py-12">
+                <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">event_busy</span>
+                <p class="text-slate-500">No bookings found</p>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div id="rejectModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+        <h3 class="text-xl font-bold mb-4">Reject Booking</h3>
+        <form id="rejectForm" method="post">
+            @Html.AntiForgeryToken()
+            <textarea name="rejectionReason" class="w-full px-4 py-2 rounded-lg border-slate-200 focus:ring-primary focus:border-primary mb-4" rows="3" placeholder="Reason for rejection..." required></textarea>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="hideRejectModal()" class="px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Reject</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('statusFilter').addEventListener('change', function() {
+            const status = this.value;
+            document.querySelectorAll('.booking-row').forEach(row => {
+                row.style.display = (status === 'all' || row.dataset.status === status) ? '' : 'none';
+            });
+        });
+
+        function showRejectModal(bookingId) {
+            document.getElementById('rejectForm').action = '@Url.Action("RejectBooking", "Owner")/' + bookingId;
+            document.getElementById('rejectModal').classList.remove('hidden');
+            document.getElementById('rejectModal').classList.add('flex');
+        }
+        function hideRejectModal() {
+            document.getElementById('rejectModal').classList.add('hidden');
+            document.getElementById('rejectModal').classList.remove('flex');
+        }
+    </script>
+}

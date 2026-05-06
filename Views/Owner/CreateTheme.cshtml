@@ -1,0 +1,325 @@
+﻿@model VenueBooking.ViewModels.CreateThemeViewModel
+
+@{
+    ViewData["Title"] = "Add New Theme";
+    Layout = "_OwnerLayout";
+    var venues = ViewBag.Venues as IEnumerable<dynamic> ?? new List<dynamic>();
+    var eventTypes = new List<string> { "Marriage", "Engagement", "Birthday", "Corporate", "Party", "Other" };
+}
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6">
+    <div class="flex items-center gap-4 mb-8">
+        <a asp-action="Themes" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+            <span class="material-symbols-outlined text-slate-600">arrow_back</span>
+        </a>
+        <div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">Add New Theme</h2>
+            <p class="text-slate-500 mt-1 text-sm sm:text-base">Create a new decorative theme for your venue</p>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="bg-green-100 border border-green-200 text-green-700 px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span class="text-sm">@TempData["Success"]</span>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
+            <span class="material-symbols-outlined">error</span>
+            <span class="text-sm">@TempData["Error"]</span>
+        </div>
+    }
+
+    <form asp-action="CreateTheme" method="post" enctype="multipart/form-data" class="space-y-8" id="createThemeForm">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6"></div>
+
+        <!-- Venue Selection -->
+        <div class="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">location_on</span>
+                Venue
+            </h3>
+            <div class="mb-4">
+                <label for="VenueId" class="block text-sm font-medium mb-2">Select Venue *</label>
+                <select name="VenueId" id="VenueId" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-primary focus:border-primary">
+                    <option value="">-- Choose a venue --</option>
+                    @foreach (var venue in venues)
+                    {
+                        <option value="@venue.VenueId">@venue.VenueName</option>
+                    }
+                </select>
+                <span class="text-red-500 text-sm venue-error hidden">Please select a venue.</span>
+            </div>
+        </div>
+
+        <!-- Basic Info -->
+        <div class="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">info</span>
+                Theme Information
+            </h3>
+            <div class="mb-4">
+                <label for="ThemeName" class="block text-sm font-medium mb-2">Theme Name *</label>
+                <input name="ThemeName" id="ThemeName" class="w-full px-4 py-2.5 rounded-lg border border-slate-200" value="@Model.ThemeName" />
+                <span class="text-red-500 text-sm theme-name-error hidden">Theme name is required.</span>
+            </div>
+            <div class="mb-4">
+                <label for="Description" class="block text-sm font-medium mb-2">Description</label>
+                <textarea name="Description" id="Description" rows="4" class="w-full px-4 py-2.5 rounded-lg border border-slate-200">@Model.Description</textarea>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                <label class="flex items-center gap-2">
+                    <input type="hidden" name="IsActive" value="false" />
+                    <input type="checkbox" name="IsActive" value="true" class="w-4 h-4 text-primary rounded" @(Model.IsActive ? "checked" : "") />
+                    <span class="text-sm">Active <span class="text-slate-400">(only one per venue)</span></span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="hidden" name="IsDefault" value="false" />
+                    <input type="checkbox" name="IsDefault" value="true" class="w-4 h-4 text-primary rounded" @(Model.IsDefault ? "checked" : "") />
+                    <span class="text-sm">Default Theme</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Pricing (REQUIRED) -->
+        <div class="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold mb-1 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">payments</span>
+                Pricing *
+            </h3>
+            <p class="text-sm text-slate-500 mb-2">Add pricing for each event type. At least one is required for customers to book.</p>
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-4">
+                <p class="text-xs text-amber-700 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">warning</span>
+                    Customers can only book event types you add here. No pricing = no booking possible.
+                </p>
+            </div>
+            <span class="text-red-500 text-sm pricing-error hidden">At least one pricing entry with a price is required.</span>
+            <div id="pricing-list"></div>
+            <button type="button" id="addPricingBtn" class="w-full sm:w-auto px-4 py-2 border border-dashed border-slate-300 rounded-lg text-sm hover:bg-slate-50 hover:border-primary transition-colors flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm">add</span>
+                Add Event Type Pricing
+            </button>
+        </div>
+
+        <!-- Images -->
+        <div class="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">image</span>
+                Theme Images *
+            </h3>
+            <p class="text-sm text-slate-500 mb-6">Upload up to 10 images. First image will be the cover.</p>
+
+            <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 sm:p-8 text-center hover:border-primary transition-colors" id="dropZone">
+                <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-3xl text-primary">cloud_upload</span>
+                </div>
+                <p class="text-slate-700 font-medium mb-2">Drag & drop images here or click to browse</p>
+                <p class="text-slate-400 text-sm mb-4">JPG, PNG, WebP up to 5MB each (Max 10)</p>
+                <input type="file" id="imagePickerInput" multiple accept=".jpg,.jpeg,.png,.webp" class="hidden" />
+                <button type="button" id="selectImagesBtn" class="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors">
+                    Select Images
+                </button>
+                <p class="text-xs text-slate-400 mt-3" id="imageCountLabel">0 / 10 images selected</p>
+            </div>
+
+            <div id="imagePreview" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-6"></div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex flex-col sm:flex-row items-center justify-end gap-4">
+            <a asp-action="Themes" class="w-full sm:w-auto text-center px-8 py-3 border border-slate-200 rounded-lg font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</a>
+            <button type="submit" id="submitBtn" class="w-full sm:w-auto px-8 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-all shadow-md shadow-primary/20">Create Theme</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var form = $('#createThemeForm');
+            form.removeData('validator');
+            form.removeData('unobtrusiveValidation');
+            form.off('submit.validate');
+        });
+
+        // PRICING
+        var pricingIndex = 0;
+        var eventTypes = @Html.Raw(Json.Serialize(eventTypes));
+
+        document.getElementById('addPricingBtn').addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var list = document.getElementById('pricing-list');
+
+            var usedTypes = [];
+            var existingSelects = list.querySelectorAll('select[name*="EventType"]');
+            for (var s = 0; s < existingSelects.length; s++) {
+                usedTypes.push(existingSelects[s].value);
+            }
+
+            var availableTypes = eventTypes.filter(function (t) { return usedTypes.indexOf(t) === -1; });
+            if (availableTypes.length === 0) { alert('All event types have been added.'); return; }
+
+            var options = '';
+            for (var i = 0; i < availableTypes.length; i++) {
+                options += '<option value="' + availableTypes[i] + '">' + availableTypes[i] + '</option>';
+            }
+
+            var html =
+                '<div class="pricing-item border border-slate-200 rounded-lg p-4 mb-4">' +
+                    '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">' +
+                        '<div>' +
+                            '<label class="block text-sm font-medium mb-2">Event Type</label>' +
+                            '<select name="Pricings[' + pricingIndex + '].EventType" class="w-full px-4 py-2 rounded-lg border border-slate-200">' + options + '</select>' +
+                        '</div>' +
+                        '<div>' +
+                            '<label class="block text-sm font-medium mb-2">Price per Day (₹) *</label>' +
+                            '<input name="Pricings[' + pricingIndex + '].PricePerDay" type="number" step="0.01" min="1" required placeholder="e.g. 50000" class="w-full px-4 py-2 rounded-lg border border-slate-200 pricing-price-input" />' +
+                        '</div>' +
+                        '<div class="flex items-end">' +
+                            '<input type="hidden" name="Pricings[' + pricingIndex + '].IsActive" value="true" class="pricing-active-hidden" />' +
+                            '<label class="flex items-center gap-2 pb-2">' +
+                                '<input type="checkbox" class="w-4 h-4 text-primary rounded pricing-active-checkbox" checked data-index="' + pricingIndex + '" />' +
+                                '<span class="text-sm">Active</span>' +
+                            '</label>' +
+                        '</div>' +
+                        '<div class="flex items-end justify-end">' +
+                            '<button type="button" class="remove-pricing-btn px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm flex items-center gap-1">' +
+                                '<span class="material-symbols-outlined text-sm">delete</span> Remove' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            list.insertAdjacentHTML('beforeend', html);
+            pricingIndex++;
+        });
+
+        // Sync checkbox -> hidden field value
+        document.getElementById('pricing-list').addEventListener('change', function (e) {
+            if (e.target.classList.contains('pricing-active-checkbox')) {
+                var hiddenField = e.target.closest('.pricing-item').querySelector('.pricing-active-hidden');
+                hiddenField.value = e.target.checked ? 'true' : 'false';
+            }
+        });
+
+        document.getElementById('pricing-list').addEventListener('click', function (e) {
+            var btn = e.target.closest('.remove-pricing-btn');
+            if (btn) { e.preventDefault(); e.stopPropagation(); btn.closest('.pricing-item').remove(); reindexPricings(); }
+        });
+
+        function reindexPricings() {
+            var items = document.querySelectorAll('#pricing-list .pricing-item');
+            pricingIndex = 0;
+            for (var idx = 0; idx < items.length; idx++) {
+                var fields = items[idx].querySelectorAll('[name]');
+                for (var j = 0; j < fields.length; j++) {
+                    fields[j].name = fields[j].name.replace(/Pricings\[\d+\]/, 'Pricings[' + idx + ']');
+                }
+                pricingIndex = idx + 1;
+            }
+        }
+
+        // Auto-add first pricing row
+        document.getElementById('addPricingBtn').click();
+
+        // IMAGES
+        var MAX_IMAGES = 10, MAX_FILE_SIZE = 5 * 1024 * 1024;
+        var ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+        var selectedFiles = [];
+        var pickerInput = document.getElementById('imagePickerInput');
+        var previewContainer = document.getElementById('imagePreview');
+        var dropZone = document.getElementById('dropZone');
+        var countLabel = document.getElementById('imageCountLabel');
+
+        document.getElementById('selectImagesBtn').addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); pickerInput.click(); });
+        pickerInput.addEventListener('change', function () { addFiles(Array.from(pickerInput.files)); pickerInput.value = ''; });
+
+        dropZone.addEventListener('dragover', function (e) { e.preventDefault(); dropZone.classList.add('border-primary'); });
+        dropZone.addEventListener('dragleave', function () { dropZone.classList.remove('border-primary'); });
+        dropZone.addEventListener('drop', function (e) { e.preventDefault(); dropZone.classList.remove('border-primary'); addFiles(Array.from(e.dataTransfer.files)); });
+
+        function addFiles(newFiles) {
+            for (var i = 0; i < newFiles.length; i++) {
+                var file = newFiles[i];
+                if (selectedFiles.length >= MAX_IMAGES) { alert('Maximum ' + MAX_IMAGES + ' images allowed.'); break; }
+                if (ALLOWED_TYPES.indexOf(file.type) === -1) { alert('"' + file.name + '" not supported.'); continue; }
+                if (file.size > MAX_FILE_SIZE) { alert('"' + file.name + '" too large.'); continue; }
+                var dup = false;
+                for (var j = 0; j < selectedFiles.length; j++) { if (selectedFiles[j].name === file.name && selectedFiles[j].size === file.size) { dup = true; break; } }
+                if (!dup) selectedFiles.push(file);
+            }
+            renderPreviews();
+            countLabel.textContent = selectedFiles.length + ' / ' + MAX_IMAGES + ' images selected';
+        }
+
+        function removeFile(index) { selectedFiles.splice(index, 1); renderPreviews(); countLabel.textContent = selectedFiles.length + ' / ' + MAX_IMAGES + ' images selected'; }
+
+        function renderPreviews() {
+            previewContainer.innerHTML = '';
+            for (var i = 0; i < selectedFiles.length; i++) {
+                (function (file, index) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        var div = document.createElement('div'); div.className = 'relative group';
+                        div.innerHTML =
+                            '<img src="' + e.target.result + '" class="w-full h-32 object-cover rounded-lg border border-slate-200">' +
+                            '<div class="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">' +
+                                '<span class="text-white text-xs">' + (file.size / 1024 / 1024).toFixed(2) + ' MB</span>' +
+                                '<button type="button" onclick="removeFile(' + index + ')" class="px-2 py-1 bg-red-500 text-white text-xs rounded-md hover:bg-red-600">Remove</button>' +
+                            '</div>' +
+                            (index === 0 ? '<span class="absolute top-2 left-2 px-2 py-1 bg-primary text-white text-xs rounded font-medium">Cover</span>' : '');
+                        previewContainer.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                })(selectedFiles[i], i);
+            }
+        }
+
+        // SUBMIT
+        document.getElementById('createThemeForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            var venueId = document.getElementById('VenueId').value;
+            var themeName = document.getElementById('ThemeName').value.trim();
+            var hasError = false;
+
+            document.querySelector('.venue-error').classList.add('hidden');
+            document.querySelector('.theme-name-error').classList.add('hidden');
+            document.querySelector('.pricing-error').classList.add('hidden');
+
+            if (!venueId) { document.querySelector('.venue-error').classList.remove('hidden'); hasError = true; }
+            if (!themeName) { document.querySelector('.theme-name-error').classList.remove('hidden'); hasError = true; }
+            if (selectedFiles.length === 0) { alert('Please select at least one image.'); hasError = true; }
+
+            var priceInputs = document.querySelectorAll('.pricing-price-input');
+            var hasValidPricing = false;
+            for (var i = 0; i < priceInputs.length; i++) {
+                var val = parseFloat(priceInputs[i].value);
+                if (val > 0) { hasValidPricing = true; break; }
+            }
+            if (!hasValidPricing) {
+                document.querySelector('.pricing-error').classList.remove('hidden');
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            var dt = new DataTransfer();
+            for (var i = 0; i < selectedFiles.length; i++) {
+                dt.items.add(selectedFiles[i]);
+            }
+            pickerInput.files = dt.files;
+            pickerInput.name = 'Images';
+
+            var submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Creating...';
+
+            this.submit();
+        });
+    </script>
+}

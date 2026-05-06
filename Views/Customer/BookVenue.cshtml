@@ -1,0 +1,220 @@
+﻿@model VenueBooking.ViewModels.BookingRequestViewModel
+@using VenueBooking.Models.Enums
+@{
+    ViewData["Title"] = "Book Venue";
+    Layout = "_CustomerLayout";
+    var blockedDates = ViewBag.BlockedDates as List<string> ?? new List<string>();
+    var bookedDates = ViewBag.BookedDates as List<string> ?? new List<string>();
+    var unavailableDates = blockedDates.Concat(bookedDates).ToList();
+}
+
+<div class="min-h-screen bg-background-light py-8">
+    <div class="max-w-6xl mx-auto px-4">
+        <!-- Header -->
+        <div class="flex items-center gap-4 mb-8">
+            <a href="javascript:history.back()" class="p-2 hover:bg-white rounded-lg transition-colors">
+                <span class="material-symbols-outlined text-slate-600">arrow_back</span>
+            </a>
+            <h1 class="text-3xl font-bold text-slate-900">Book Your Event</h1>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Booking Form -->
+            <div class="lg:col-span-2 space-y-6">
+                <form asp-action="BookVenue" method="post" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <input type="hidden" asp-for="VenueId" />
+                    <input type="hidden" asp-for="VenueName" />
+                    <input type="hidden" asp-for="VenueImage" />
+                    <input type="hidden" asp-for="VenueCity" />
+                    <input type="hidden" asp-for="Capacity" />
+                    <div asp-validation-summary="All" class="bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6"></div>
+
+                    <!-- Date Selection -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">calendar_today</span>
+                            Select Event Date
+                        </h3>
+                        <input type="date" asp-for="EventDate" class="w-full px-4 py-3 rounded-lg border-slate-200 focus:ring-primary focus:border-primary text-lg"
+                               min="@DateTime.Now.AddDays(1).ToString("yyyy-MM-dd")" required>
+                        <span asp-validation-for="EventDate" class="text-red-500 text-sm"></span>
+                        <p class="text-sm text-slate-500 mt-2">
+                            <span class="inline-block w-3 h-3 bg-red-100 border border-red-300 rounded mr-1"></span> Unavailable dates
+                        </p>
+                    </div>
+
+                    <!-- Theme Selection -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">palette</span>
+                            Select Theme
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach (var theme in Model.Themes)
+                            {
+                                var priceValue = theme.PricePerDay ?? 0;
+                                <label class="theme-card border-2 border-slate-200 rounded-xl p-4 cursor-pointer hover:border-primary transition-all relative block" onclick="selectTheme(this, @theme.ThemeId, @priceValue)">
+                                    <input type="radio" name="ThemeId" value="@theme.ThemeId" class="opacity-0 absolute h-0 w-0" required>
+                                    <div class="flex items-start gap-4">
+                                        <img src="@theme.ImageUrl" class="w-20 h-20 object-cover rounded-lg" onerror="this.src='/images/default-theme.jpg'">
+                                        <div class="flex-1">
+                                            <h4 class="font-bold text-slate-900">@theme.ThemeName</h4>
+                                            <p class="text-sm text-slate-500 line-clamp-2">@theme.Description</p>
+                                            <p class="text-primary font-bold mt-2">₹@string.Format("{0:N0}", priceValue) / day</p>
+                                        </div>
+                                    </div>
+                                </label>
+                            }
+                        </div>
+                        <span asp-validation-for="ThemeId" class="text-red-500 text-sm"></span>
+                    </div>
+
+                    <!-- Event Details -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">celebration</span>
+                            Event Details
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label asp-for="EventType" class="block text-sm font-medium text-slate-700 mb-2">Event Type *</label>
+                                <select asp-for="EventType" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary" required>
+                                    <option value="">Select event type</option>
+                                    <option value="@EventTypes.Marriage">Marriage</option>
+                                    <option value="@EventTypes.Engagement">Engagement</option>
+                                    <option value="@EventTypes.Birthday">Birthday</option>
+                                    <option value="@EventTypes.Corporate">Corporate</option>
+                                    <option value="@EventTypes.Other">Other</option>
+                                </select>
+                                <span asp-validation-for="EventType" class="text-red-500 text-sm"></span>
+                            </div>
+                            <div>
+                                <label asp-for="GuestCount" class="block text-sm font-medium text-slate-700 mb-2">Number of Guests *</label>
+                                <input asp-for="GuestCount" type="number" min="1" max="@Model.Capacity" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary" required>
+                                <span asp-validation-for="GuestCount" class="text-red-500 text-sm"></span>
+                                <p class="text-xs text-slate-400 mt-1">Max capacity: @Model.Capacity guests</p>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label asp-for="SpecialRequests" class="block text-sm font-medium text-slate-700 mb-2">Special Requests</label>
+                            <textarea asp-for="SpecialRequests" rows="3" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary" placeholder="Any special requirements..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">person</span>
+                            Your Contact Information
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2">
+                                <label asp-for="CustomerName" class="block text-sm font-medium text-slate-700 mb-2">Full Name *</label>
+                                <input asp-for="CustomerName" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary" required>
+                                <span asp-validation-for="CustomerName" class="text-red-500 text-sm"></span>
+                            </div>
+                            <div>
+                                <label asp-for="CustomerEmail" class="block text-sm font-medium text-slate-700 mb-2">Email *</label>
+                                <input asp-for="CustomerEmail" type="email" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary" required>
+                                <span asp-validation-for="CustomerEmail" class="text-red-500 text-sm"></span>
+                            </div>
+                            <div>
+                                <label asp-for="CustomerPhone" class="block text-sm font-medium text-slate-700 mb-2">Phone *</label>
+                                <input asp-for="CustomerPhone" type="tel" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary" required>
+                                <span asp-validation-for="CustomerPhone" class="text-red-500 text-sm"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" class="w-full py-4 bg-primary text-white rounded-xl font-bold text-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">send</span>
+                        Send Booking Request
+                    </button>
+                    <p class="text-center text-sm text-slate-500 mt-4">
+                        The venue owner will contact you to confirm availability and pricing
+                    </p>
+                </form>
+            </div>
+
+            <!-- Venue Summary -->
+            <div class="lg:col-span-1">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm sticky top-8">
+                    <img src="@Model.VenueImage" class="w-full h-48 object-cover rounded-lg mb-4" onerror="this.src='/images/default-venue.jpg'">
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">@Model.VenueName</h3>
+                    <p class="text-slate-500 flex items-center gap-1 mb-4">
+                        <span class="material-symbols-outlined text-sm">location_on</span>
+                        @Model.VenueCity
+                    </p>
+
+                    <div class="border-t border-slate-100 pt-4 space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Capacity</span>
+                            <span class="font-semibold">@Model.Capacity guests</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Event Date</span>
+                            <span class="font-semibold" id="summaryDate">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Theme</span>
+                            <span class="font-semibold" id="summaryTheme">-</span>
+                        </div>
+                        <div class="flex justify-between text-lg font-bold border-t border-slate-100 pt-3">
+                            <span>Est. Price</span>
+                            <span class="text-primary" id="summaryPrice">₹0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const unavailableDates = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(unavailableDates));
+
+        // Disable unavailable dates
+        document.getElementById('EventDate').addEventListener('input', function(e) {
+            const selected = e.target.value;
+            if (unavailableDates.includes(selected)) {
+                alert('This date is not available. Please select another date.');
+                e.target.value = '';
+            }
+            updateSummary();
+        });
+
+        function selectTheme(element, themeId, price) {
+            // Remove selection class from all cards
+            document.querySelectorAll('.theme-card').forEach(card => {
+                card.classList.remove('border-primary', 'bg-primary/5');
+                card.classList.add('border-slate-200');
+            });
+
+            // Add selection class to the clicked card
+            element.classList.remove('border-slate-200');
+            element.classList.add('border-primary', 'bg-primary/5');
+
+            // Find and check the nested radio button
+            const radio = element.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+
+            // Update summary panel
+            document.getElementById('summaryTheme').textContent = element.querySelector('h4').textContent;
+            document.getElementById('summaryPrice').textContent = '₹' + price.toLocaleString();
+        }
+
+        function updateSummary() {
+            const date = document.getElementById('EventDate').value;
+            if (date) {
+                document.getElementById('summaryDate').textContent = new Date(date).toLocaleDateString('en-IN', {
+                    day: 'numeric', month: 'short', year: 'numeric'
+                });
+            }
+        }
+
+        // Initialize
+        updateSummary();
+    </script>
+}

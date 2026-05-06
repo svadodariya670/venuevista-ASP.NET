@@ -1,0 +1,29 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio / local IDE state
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs and temporary files
+*.log
+*.cache
+*.tmp
+
+# Local secret/config overrides
+appsettings.Local.json
+appsettings.*.local.json
+appsettings.*.secret.json
+appsettings.*.secrets.json
+secrets.json
+*.secrets.json
+
+# Common key/certificate files
+*.key
+*.pem
+*.p12
+*.pfx

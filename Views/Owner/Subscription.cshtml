@@ -1,0 +1,191 @@
+﻿@model VenueBooking.ViewModels.SubscriptionViewModel
+@{
+    ViewData["Title"] = "Subscription & Billing";
+    Layout = "_OwnerLayout";
+}
+
+<div class="max-w-6xl mx-auto">
+    <!-- Page Header -->
+    <header class="mb-10">
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-text-main tracking-tight">Subscription & Billing</h2>
+        <p class="text-secondary mt-2 text-sm">Manage your venue hosting plan and view transaction history.</p>
+    </header>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3">
+            <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+            <p class="text-sm font-medium text-emerald-800">@TempData["Success"]</p>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
+            <span class="material-symbols-outlined text-red-600">error</span>
+            <p class="text-sm font-medium text-red-800">@TempData["Error"]</p>
+        </div>
+    }
+    @if (TempData["Info"] != null)
+    {
+        <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center gap-3">
+            <span class="material-symbols-outlined text-blue-600">info</span>
+            <p class="text-sm font-medium text-blue-800">@TempData["Info"]</p>
+        </div>
+    }
+
+    <!-- Current Plan Card -->
+    <section class="mb-12">
+        <div class="bg-white rounded-xl p-6 sm:p-8 border border-primary/10 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16"></div>
+            <div class="flex items-center gap-4 sm:gap-6 relative z-10">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 bg-primary/20 rounded-xl flex items-center justify-center text-primary shrink-0">
+                    <span class="material-symbols-outlined text-3xl sm:text-4xl">verified</span>
+                </div>
+                <div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <h3 class="text-lg sm:text-xl font-bold text-text-main">@Model.CurrentPlanName Plan</h3>
+                        @if (Model.IsActive)
+                        {
+                            <span class="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full uppercase">Active</span>
+                        }
+                        else
+                        {
+                            <span class="px-3 py-1 bg-slate-200 text-slate-600 text-xs font-bold rounded-full uppercase">Inactive</span>
+                        }
+                    </div>
+                    @if (Model.NextBillingDate.HasValue)
+                    {
+                        <p class="text-secondary text-sm mt-1">
+                            Expires on <span class="font-semibold text-text-main">@Model.NextBillingDate.Value.ToString("MMM dd, yyyy")</span>
+                            (@Model.DaysLeft days left)
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="text-secondary text-sm mt-1">No active subscription. Choose a plan below.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="mb-16">
+        <h3 class="text-xl sm:text-2xl font-bold text-text-main mb-8">Available Plans</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+            @foreach (var plan in Model.Plans)
+            {
+                var isPopular = plan.IsPopular;
+                var isCurrent = plan.IsCurrent;
+                var cardClass = isPopular ? "border-2 border-primary md:scale-105 z-10" : "border border-primary/10";
+
+                <div class="bg-white rounded-xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow relative @cardClass">
+                    @if (isPopular)
+                    {
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
+                            Most Popular
+                        </div>
+                    }
+                    <div class="mb-6 sm:mb-8">
+                        <h4 class="text-secondary font-bold text-sm uppercase tracking-widest mb-2">@plan.PlanName</h4>
+                        <div class="flex items-baseline">
+                            <span class="text-3xl sm:text-4xl font-extrabold text-text-main">₹@plan.Price.ToString("N0")</span>
+                            <span class="text-secondary ml-1 font-medium text-sm">/@(plan.DurationInDays)d</span>
+                        </div>
+                        <p class="text-secondary text-sm mt-3">@plan.Description</p>
+                    </div>
+                    <ul class="space-y-3 sm:space-y-4 mb-8 sm:mb-10">
+                        @foreach (var feature in plan.FeaturesList)
+                        {
+                            <li class="flex items-center gap-3 text-sm text-text-main">
+                                <span class="material-symbols-outlined text-secondary text-lg">check_circle</span>
+                                @feature
+                            </li>
+                        }
+                        <li class="flex items-center gap-3 text-sm text-text-main">
+                            <span class="material-symbols-outlined text-secondary text-lg">check_circle</span>
+                            Up to @plan.MaxVenuesAllowed venues
+                        </li>
+                    </ul>
+                    @if (isCurrent)
+                    {
+                        <button disabled class="w-full py-3 bg-primary text-white font-bold rounded-lg opacity-75 cursor-not-allowed">
+                            Current Plan
+                        </button>
+                    }
+                    else
+                    {
+                        <form asp-action="PurchaseSubscription" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="planId" value="@plan.PlanId" />
+                            <button type="submit" class="w-full py-3 border border-secondary text-secondary hover:bg-secondary/5 font-bold rounded-lg transition-colors">
+                                Select @plan.PlanName
+                            </button>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- Payment History -->
+    <section>
+        <h3 class="text-xl sm:text-2xl font-bold text-text-main mb-6">Payment History</h3>
+        @if (Model.Payments.Any())
+        {
+            <div class="bg-white rounded-xl border border-primary/10 overflow-hidden shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[600px]">
+                        <thead>
+                            <tr class="bg-secondary text-white">
+                                <th class="px-4 sm:px-6 py-4 font-semibold text-sm">Date</th>
+                                <th class="px-4 sm:px-6 py-4 font-semibold text-sm">Transaction ID</th>
+                                <th class="px-4 sm:px-6 py-4 font-semibold text-sm">Amount</th>
+                                <th class="px-4 sm:px-6 py-4 font-semibold text-sm">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-primary/5">
+                            @foreach (var payment in Model.Payments)
+                            {
+                                <tr class="hover:bg-background-light transition-colors">
+                                    <td class="px-4 sm:px-6 py-4 text-sm">@payment.PaymentDate.ToString("MMM dd, yyyy")</td>
+                                    <td class="px-4 sm:px-6 py-4 text-sm font-mono text-secondary uppercase tracking-tighter">@payment.TransactionId</td>
+                                    <td class="px-4 sm:px-6 py-4 text-sm font-bold">₹@payment.Amount.ToString("N0")</td>
+                                    <td class="px-4 sm:px-6 py-4 text-sm">
+                                        @if (payment.Status == "Completed" || payment.Status == "Successful")
+                                        {
+                                            <span class="flex items-center gap-1.5 text-green-600 font-medium">
+                                                <span class="material-symbols-outlined text-base">check_circle</span> Successful
+                                            </span>
+                                        }
+                                        else if (payment.Status == "Pending")
+                                        {
+                                            <span class="flex items-center gap-1.5 text-yellow-600 font-medium">
+                                                <span class="material-symbols-outlined text-base">pending</span> Pending
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="flex items-center gap-1.5 text-red-600 font-medium">
+                                                <span class="material-symbols-outlined text-base">error</span> @payment.Status
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="bg-white p-12 rounded-xl border border-primary/10 text-center">
+                <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">receipt</span>
+                <h4 class="text-xl font-bold text-slate-700 mb-2">No Payment History</h4>
+                <p class="text-slate-500">Payments will appear here once you purchase a plan.</p>
+            </div>
+        }
+    </section>
+</div>

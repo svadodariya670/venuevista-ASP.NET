@@ -1,0 +1,171 @@
+@model VenueBooking.Models.OwnerSubscription
+@{
+    ViewData["Title"] = "Complete Payment";
+    Layout = "_OwnerLayout";
+
+    var razorpayKeyId = ViewBag.RazorpayKeyId as string;
+    var razorpayOrderId = ViewBag.RazorpayOrderId as string;
+    var orderAmount = (int)(ViewBag.OrderAmount ?? 0);
+    var ownerName = ViewBag.OwnerName as string ?? "";
+    var ownerEmail = ViewBag.OwnerEmail as string ?? "";
+}
+
+<div class="max-w-2xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <a asp-action="Subscription" class="text-primary hover:underline text-sm flex items-center gap-1 mb-4">
+            <span class="material-symbols-outlined text-lg">arrow_back</span>
+            Back to Subscription
+        </a>
+        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Complete Payment</h2>
+        <p class="text-slate-500 mt-1 text-sm">Pay securely via Razorpay to activate your plan</p>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 mb-6">
+        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">receipt_long</span>
+            Order Summary
+        </h3>
+        <div class="space-y-3 text-sm">
+            <div class="flex justify-between">
+                <span class="text-slate-500">Plan</span>
+                <span class="font-bold text-slate-900">@Model.Plan.PlanName</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-500">Duration</span>
+                <span class="font-medium text-slate-700">@Model.Plan.DurationInDays days</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-500">Max Venues</span>
+                <span class="font-medium text-slate-700">@Model.Plan.MaxVenuesAllowed venues</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-500">Valid Until</span>
+                <span class="font-medium text-slate-700">@Model.EndDate.ToString("MMM dd, yyyy")</span>
+            </div>
+            <hr class="border-slate-200" />
+            <div class="flex justify-between items-center">
+                <span class="text-lg font-bold text-slate-900">Total</span>
+                <span class="text-2xl font-black text-primary">?@Model.Plan.Price.ToString("N0")</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Section -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
+        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">lock</span>
+            Secure Payment
+        </h3>
+
+        <!-- Payment methods info -->
+        <div class="grid grid-cols-4 gap-3 mb-6">
+            <div class="p-3 bg-slate-50 rounded-xl text-center">
+                <span class="material-symbols-outlined text-2xl text-slate-600 mb-1">credit_card</span>
+                <p class="text-[10px] font-bold text-slate-500">Cards</p>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-xl text-center">
+                <span class="material-symbols-outlined text-2xl text-slate-600 mb-1">qr_code_2</span>
+                <p class="text-[10px] font-bold text-slate-500">UPI</p>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-xl text-center">
+                <span class="material-symbols-outlined text-2xl text-slate-600 mb-1">account_balance</span>
+                <p class="text-[10px] font-bold text-slate-500">Net Banking</p>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-xl text-center">
+                <span class="material-symbols-outlined text-2xl text-slate-600 mb-1">account_balance_wallet</span>
+                <p class="text-[10px] font-bold text-slate-500">Wallets</p>
+            </div>
+        </div>
+
+        <!-- Pay button -->
+        <button type="button" id="payBtn"
+                class="w-full py-3.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/30 flex items-center justify-center gap-2 transition-all">
+            <span class="material-symbols-outlined">lock</span>
+            Pay ?@Model.Plan.Price.ToString("N0") Securely
+        </button>
+
+        <p class="text-center text-xs text-slate-400 mt-4 flex items-center justify-center gap-1">
+            <span class="material-symbols-outlined text-sm">verified_user</span>
+            Secured by Razorpay. Your payment info is encrypted.
+        </p>
+    </div>
+
+    <!-- Hidden form for success callback -->
+    <form id="paymentSuccessForm" asp-action="ConfirmSubscriptionPayment" method="post" class="hidden">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="subscriptionId" value="@Model.SubscriptionId" />
+        <input type="hidden" name="razorpay_payment_id" id="inp_payment_id" />
+        <input type="hidden" name="razorpay_order_id" id="inp_order_id" />
+        <input type="hidden" name="razorpay_signature" id="inp_signature" />
+    </form>
+
+    <!-- Hidden form for failure callback -->
+    <form id="paymentFailedForm" asp-action="SubscriptionPaymentFailed" method="post" class="hidden">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="subscriptionId" value="@Model.SubscriptionId" />
+    </form>
+</div>
+
+@section Scripts {
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        (function () {
+            var payBtn = document.getElementById('payBtn');
+            var isProcessing = false;
+
+            payBtn.addEventListener('click', function () {
+                if (isProcessing) return;
+
+                var options = {
+                    key: '@Html.Raw(razorpayKeyId)',
+                    amount: @orderAmount,
+                    currency: 'INR',
+                    name: 'Venue Vista',
+                    description: '@Html.Raw(Model.Plan.PlanName.Replace("'", "\\'")) Plan — @Model.Plan.DurationInDays Days',
+                    order_id: '@Html.Raw(razorpayOrderId)',
+                    prefill: {
+                        name: '@Html.Raw(ownerName.Replace("'", "\\'"))',
+                        email: '@Html.Raw(ownerEmail.Replace("'", "\\'"))'
+                    },
+                    theme: { color: '#C65D3B' },
+                    handler: function (response) {
+                        // Payment successful — verify all fields exist
+                        if (!response.razorpay_payment_id || !response.razorpay_order_id || !response.razorpay_signature) {
+                            alert('Incomplete payment response. Please contact support.');
+                            return;
+                        }
+
+                        isProcessing = true;
+                        payBtn.disabled = true;
+                        payBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> Verifying Payment...';
+
+                        document.getElementById('inp_payment_id').value = response.razorpay_payment_id;
+                        document.getElementById('inp_order_id').value = response.razorpay_order_id;
+                        document.getElementById('inp_signature').value = response.razorpay_signature;
+                        document.getElementById('paymentSuccessForm').submit();
+                    },
+                    modal: {
+                        ondismiss: function () {
+                            if (!isProcessing) {
+                                if (confirm('Payment was not completed. Do you want to cancel?')) {
+                                    document.getElementById('paymentFailedForm').submit();
+                                }
+                            }
+                        }
+                    }
+                };
+
+                var rzp = new Razorpay(options);
+
+                rzp.on('payment.failed', function (response) {
+                    alert('Payment failed: ' + response.error.description);
+                    document.getElementById('paymentFailedForm').submit();
+                });
+
+                rzp.open();
+            });
+        })();
+    </script>
+}

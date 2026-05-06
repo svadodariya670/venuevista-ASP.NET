@@ -1,0 +1,290 @@
+﻿@model VenueBooking.ViewModels.OwnerSettingsViewModel
+@{
+    ViewData["Title"] = "Account Settings";
+    Layout = "_OwnerLayout";
+}
+
+<div class="min-h-screen bg-background-light py-8">
+    <div class="max-w-4xl mx-auto px-4">
+
+        <!-- Header -->
+        <header class="mb-8">
+            <h2 class="text-3xl font-bold text-text-main mb-2">Account Settings</h2>
+            <p class="text-secondary">Manage your personal information, security preferences, and notification settings.</p>
+        </header>
+
+        <!-- Success/Error Messages -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="mb-6 p-4 bg-green-100 border border-green-200 text-green-700 rounded-xl flex items-center gap-3">
+                <span class="material-symbols-outlined">check_circle</span>
+                <p class="font-medium">@TempData["Success"]</p>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="mb-6 p-4 bg-red-100 border border-red-200 text-red-700 rounded-xl flex items-center gap-3">
+                <span class="material-symbols-outlined">error</span>
+                <p class="font-medium">@TempData["Error"]</p>
+            </div>
+        }
+
+        <!-- Tabs Navigation -->
+        <div class="flex border-b border-primary/10 mb-8 overflow-x-auto" id="settings-tabs">
+            <button onclick="switchTab('profile')" id="tab-profile"
+                    class="px-6 py-4 text-sm font-semibold border-b-2 border-primary text-primary flex items-center gap-2 whitespace-nowrap transition-all">
+                <span class="material-symbols-outlined text-lg">person</span>
+                Profile
+            </button>
+            <button onclick="switchTab('security')" id="tab-security"
+                    class="px-6 py-4 text-sm font-medium text-secondary hover:text-primary border-b-2 border-transparent hover:border-primary/30 transition-all flex items-center gap-2 whitespace-nowrap">
+                <span class="material-symbols-outlined text-lg">shield</span>
+                Security
+            </button>
+        </div>
+
+        <!-- Profile Tab -->
+        <div id="content-profile" class="tab-content">
+            <div class="bg-white rounded-xl shadow-sm border border-primary/5 overflow-hidden">
+                <div class="p-8">
+                    <!-- User Icon & Name Header (REPLACED IMAGE WITH ICON) -->
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-8 mb-10 pb-10 border-b border-primary/5">
+                        <div class="flex items-center gap-4">
+                            <!-- User Icon instead of Image -->
+                            <div class="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                <span class="material-symbols-outlined text-4xl">person</span>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-text-main">@Model.Name</h3>
+                                <p class="text-sm text-secondary">@Model.Role</p>
+                            </div>
+                        </div>
+                        <div class="hidden md:block text-right ml-auto">
+                            <p class="text-xs font-medium text-secondary uppercase tracking-wider">Last Login</p>
+                            <p class="text-sm font-semibold text-text-main">
+                                @(Model.LastLoginAt?.ToString("MMM dd, yyyy h:mm tt") ?? "N/A")
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Profile Form -->
+                    <form asp-action="UpdateProfile" method="post" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        @Html.AntiForgeryToken()
+
+                        <div class="space-y-2">
+                            <label class="text-sm font-semibold text-text-main" asp-for="Name">Full Name</label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-lg">person_outline</span>
+                                <input asp-for="Name"
+                                       class="w-full pl-10 pr-4 py-3 bg-background-light/50 border border-primary/10 rounded-lg focus:ring-primary focus:border-primary text-text-main transition-all"
+                                       type="text" placeholder="Enter your full name" />
+                            </div>
+                            <span asp-validation-for="Name" class="text-red-500 text-xs"></span>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-sm font-semibold text-text-main" asp-for="Email">Email Address</label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-lg">mail</span>
+                                <input asp-for="Email"
+                                       class="w-full pl-10 pr-4 py-3 bg-background-light/50 border border-primary/10 rounded-lg focus:ring-primary focus:border-primary text-text-main transition-all"
+                                       type="email" placeholder="Enter your email" />
+                            </div>
+                            <span asp-validation-for="Email" class="text-red-500 text-xs"></span>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-sm font-semibold text-text-main" asp-for="Phone">Phone Number</label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-lg">call</span>
+                                <input asp-for="Phone"
+                                       class="w-full pl-10 pr-4 py-3 bg-background-light/50 border border-primary/10 rounded-lg focus:ring-primary focus:border-primary text-text-main transition-all"
+                                       type="tel" placeholder="Enter phone number" />
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-sm font-semibold text-text-main">Account Type</label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-lg">badge</span>
+                                <input type="text" readonly
+                                       class="w-full pl-10 pr-4 py-3 bg-zinc-50 border border-primary/5 rounded-lg text-secondary cursor-not-allowed italic"
+                                       value="Primary Venue Owner" />
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-2 space-y-2">
+                            <label class="text-sm font-semibold text-text-main" asp-for="Bio">Short Bio</label>
+                            <textarea asp-for="Bio" rows="3"
+                                      class="w-full px-4 py-3 bg-background-light/50 border border-primary/10 rounded-lg focus:ring-primary focus:border-primary text-text-main transition-all"
+                                      placeholder="Tell us about yourself..."></textarea>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="bg-background-light/30 px-8 py-5 border-t border-primary/5 flex justify-end gap-4">
+                    <button type="reset" class="px-6 py-2.5 rounded-lg text-sm font-semibold text-secondary hover:text-primary hover:bg-primary/5 transition-all">
+                        Cancel
+                    </button>
+                    <button type="submit" form="profile-form"
+                            class="px-8 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold shadow-md hover:bg-primary/90 shadow-primary/20 transition-all">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Tab -->
+        <div id="content-security" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-primary/5 overflow-hidden">
+                <div class="p-8">
+                    <h3 class="text-lg font-semibold text-text-main mb-6 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">lock</span>
+                        Change Password
+                    </h3>
+
+                    <form asp-action="ChangePassword" method="post" class="space-y-6 max-w-md">
+                        @Html.AntiForgeryToken()
+
+                        <div class="space-y-2">
+                            <label class="text-sm font-semibold text-text-main" asp-for="CurrentPassword">Current Password</label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-lg">lock_outline</span>
+                                <input asp-for="CurrentPassword"
+                                       class="w-full pl-10 pr-4 py-3 bg-background-light/50 border border-primary/10 rounded-lg focus:ring-primary focus:border-primary text-text-main transition-all"
+                                       type="password" placeholder="Enter current password" />
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-sm font-semibold text-text-main" asp-for="NewPassword">New Password</label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-lg">lock</span>
+                                <input asp-for="NewPassword"
+                                       class="w-full pl-10 pr-4 py-3 bg-background-light/50 border border-primary/10 rounded-lg focus:ring-primary focus:border-primary text-text-main transition-all"
+                                       type="password" placeholder="Enter new password" />
+                            </div>
+                            <span asp-validation-for="NewPassword" class="text-red-500 text-xs"></span>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-sm font-semibold text-text-main" asp-for="ConfirmPassword">Confirm New Password</label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-lg">lock</span>
+                                <input asp-for="ConfirmPassword"
+                                       class="w-full pl-10 pr-4 py-3 bg-background-light/50 border border-primary/10 rounded-lg focus:ring-primary focus:border-primary text-text-main transition-all"
+                                       type="password" placeholder="Confirm new password" />
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="text-red-500 text-xs"></span>
+                        </div>
+
+                        <div class="pt-4">
+                            <button type="submit"
+                                    class="px-8 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold shadow-md hover:bg-primary/90 shadow-primary/20 transition-all">
+                                Update Password
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-8 border-primary/10" />
+
+                    <h3 class="text-lg font-semibold text-text-main mb-4 flex items-center gap-2 text-red-600">
+                        <span class="material-symbols-outlined">warning</span>
+                        Danger Zone
+                    </h3>
+
+                    <div class="bg-red-50 border border-red-100 rounded-lg p-4">
+                        <h4 class="font-semibold text-red-800 text-sm mb-2">Deactivate Account</h4>
+                        <p class="text-red-600 text-sm mb-4">Once you deactivate your account, all your venues will be hidden and you won't be able to access the owner dashboard.</p>
+                        <form asp-action="DeactivateAccount" method="post" onsubmit="return confirm('Are you sure you want to deactivate your account? This action cannot be undone.');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit"
+                                    class="px-6 py-2 border-2 border-red-500 text-red-600 rounded-lg text-sm font-semibold hover:bg-red-50 transition-all">
+                                Deactivate Account
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+
+        <!-- Info Cards -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="p-6 bg-secondary/5 border border-secondary/10 rounded-xl flex items-start gap-4">
+                <div class="p-2 bg-secondary/10 rounded-lg text-secondary">
+                    <span class="material-symbols-outlined">help_outline</span>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-text-main text-sm">Need help?</h4>
+                    <p class="text-xs text-secondary mt-1">Visit our Help Center or contact owner support for assistance with your account settings.</p>
+                    <a href="#" class="text-primary text-xs font-bold mt-2 inline-block hover:underline">Contact Support</a>
+                </div>
+            </div>
+
+            @if (Model.IsVerified)
+            {
+                <div class="p-6 bg-primary/5 border border-primary/10 rounded-xl flex items-start gap-4">
+                    <div class="p-2 bg-primary/10 rounded-lg text-primary">
+                        <span class="material-symbols-outlined">verified_user</span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-text-main text-sm">Verified Account</h4>
+                        <p class="text-xs text-secondary mt-1">Your identity and venue ownership have been verified. You're eligible for the "Top Host" badge.</p>
+                        <a href="#" class="text-primary text-xs font-bold mt-2 inline-block hover:underline">Learn More</a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="p-6 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-4">
+                    <div class="p-2 bg-amber-100 rounded-lg text-amber-600">
+                        <span class="material-symbols-outlined">pending</span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-text-main text-sm">Verification Pending</h4>
+                        <p class="text-xs text-secondary mt-1">Complete your profile verification to unlock all owner features.</p>
+                        <a href="#" class="text-primary text-xs font-bold mt-2 inline-block hover:underline">Verify Now</a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function switchTab(tabName) {
+            // Hide all content
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.add('hidden');
+            });
+
+            // Show selected content
+            document.getElementById('content-' + tabName).classList.remove('hidden');
+
+            // Reset all tabs styling
+            document.querySelectorAll('#settings-tabs button').forEach(btn => {
+                btn.classList.remove('border-primary', 'text-primary', 'font-semibold');
+                btn.classList.add('border-transparent', 'text-secondary', 'font-medium');
+            });
+
+            // Style active tab
+            const activeBtn = document.getElementById('tab-' + tabName);
+            activeBtn.classList.remove('border-transparent', 'text-secondary', 'font-medium');
+            activeBtn.classList.add('border-primary', 'text-primary', 'font-semibold');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add form id to profile form
+            const profileForm = document.querySelector('#content-profile form');
+            if (profileForm) {
+                profileForm.id = 'profile-form';
+            }
+        });
+    </script>
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,269 @@
+﻿@using VenueBooking.Models.Enums
+@model VenueBooking.ViewModels.AdminDashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "_AdminLayout";
+}
+
+<div class="max-w-[1400px] mx-auto">
+    <!-- Header -->
+    <div class="mb-8 flex items-end justify-between">
+        <div>
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Dashboard Overview</h2>
+            <p class="text-slate-500 mt-1">Welcome back, @User.Identity.Name. Here's what's happening today.</p>
+        </div>
+        <div class="flex gap-3">
+            <button class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg">calendar_today</span>
+                Last 30 Days
+            </button>
+            <button class="bg-primary text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/30 hover:bg-primary/90 flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg">download</span>
+                Export Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
+        <!-- Total Users -->
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
+                    <span class="material-symbols-outlined">group</span>
+                </div>
+                <span class="text-emerald-500 text-xs font-bold flex items-center">
+                    +@Model.TotalUsers <span class="material-symbols-outlined text-sm">trending_up</span>
+                </span>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Total Users</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalUsers.ToString("N0")</h3>
+            <p class="text-xs text-slate-400 mt-1">@Model.TotalOwners Owners, @Model.TotalCustomers Customers</p>
+        </div>
+
+        <!-- Total Venues -->
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-lg">
+                    <span class="material-symbols-outlined">storefront</span>
+                </div>
+                <span class="text-emerald-500 text-xs font-bold flex items-center">
+                    +@Model.TotalVenues <span class="material-symbols-outlined text-sm">trending_up</span>
+                </span>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Total Venues</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalVenues.ToString("N0")</h3>
+            <p class="text-xs text-slate-400 mt-1">@Model.PendingVenues pending approval</p>
+        </div>
+
+        <!-- Total Bookings -->
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-orange-50 dark:bg-orange-900/20 text-orange-600 rounded-lg">
+                    <span class="material-symbols-outlined">bookmark_check</span>
+                </div>
+                <span class="text-emerald-500 text-xs font-bold flex items-center">
+                    +@Model.TotalBookings <span class="material-symbols-outlined text-sm">trending_up</span>
+                </span>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Total Bookings</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalBookings.ToString("N0")</h3>
+        </div>
+
+        <!-- Total Revenue -->
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg">
+                    <span class="material-symbols-outlined">payments</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Total Revenue</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalRevenue.ToString("C0")</h3>
+        </div>
+
+        <!-- Pending Approvals -->
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-lg">
+                    <span class="material-symbols-outlined">assignment_late</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Pending Approvals</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.PendingApprovals</h3>
+            <a asp-action="Venues" asp-route-status="Pending" class="text-xs text-primary hover:underline">Review now</a>
+        </div>
+
+        <!-- New Messages -->
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-slate-50 dark:bg-slate-800 text-slate-600 rounded-lg">
+                    <span class="material-symbols-outlined">chat_bubble</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">New Messages</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.UnreadMessages</h3>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Revenue Chart -->
+        <div class="bg-card-bg dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-8">
+                <h4 class="text-lg font-bold text-slate-900 dark:text-white">Revenue Overview</h4>
+                <select class="bg-slate-100 dark:bg-slate-800 border-none text-xs font-bold rounded-lg focus:ring-primary/20">
+                    <option>Last 7 Days</option>
+                </select>
+            </div>
+            <div class="relative h-64 w-full">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Booking Distribution -->
+        <div class="bg-card-bg dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-8">Booking Distribution</h4>
+            <div class="flex flex-col gap-6">
+                @foreach (var type in Model.BookingTypes)
+                {
+                    <div>
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="font-medium text-slate-700 dark:text-slate-300">@type.EventType</span>
+                            <span class="font-bold text-primary">@type.Percentage.ToString("F0")%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                            <div class="bg-primary h-full rounded-full transition-all" style="width: @type.Percentage%"></div>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">@type.Count bookings</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Bookings Table -->
+    <div class="bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-8 overflow-hidden">
+        <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <h4 class="text-lg font-bold text-slate-900 dark:text-white">Recent Bookings</h4>
+            <a asp-action="Bookings" class="text-sm font-bold text-primary hover:underline">View All</a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4">Customer</th>
+                        <th class="px-6 py-4">Venue</th>
+                        <th class="px-6 py-4">Event Date</th>
+                        <th class="px-6 py-4">Amount</th>
+                        <th class="px-6 py-4">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                    @foreach (var booking in Model.RecentBookings)
+                    {
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                                        @booking.CustomerInitials
+                                    </div>
+                                    <span class="text-sm font-semibold text-slate-900 dark:text-white">@booking.CustomerName</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">@booking.VenueName</td>
+                            <td class="px-6 py-4 text-sm text-slate-500">@booking.EventDate.ToString("MMM dd, yyyy")</td>
+                            <td class="px-6 py-4 text-sm font-bold text-slate-900 dark:text-white">@booking.TotalPrice.ToString("C")</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 rounded-md text-xs font-bold
+            @(booking.Status == BookingStatus.Confirmed ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" :
+                                                booking.Status == BookingStatus.Pending ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" :
+                                                "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400")">
+                                @booking.Status
+                            </span>
+                        </td>
+                    </tr>
+                                        }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Newest Users -->
+    <div class="bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <h4 class="text-lg font-bold text-slate-900 dark:text-white">Newest Registered Users</h4>
+            <a asp-action="Users" class="text-sm font-bold text-primary hover:underline">Manage All</a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4">Name</th>
+                        <th class="px-6 py-4">Email</th>
+                        <th class="px-6 py-4">Joined</th>
+                        <th class="px-6 py-4">Type</th>
+                        <th class="px-6 py-4 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                    @foreach (var user in Model.NewestUsers)
+                    {
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="size-8 rounded-full bg-secondary/10 text-secondary flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-sm">person</span>
+                                    </div>
+                                    <span class="text-sm font-semibold text-slate-900 dark:text-white">@user.Name</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-500">@user.Email</td>
+                            <td class="px-6 py-4 text-sm text-slate-500">@user.TimeAgo</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide
+        @(user.Role == UserRole.Owner ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary")">
+                                    @user.Role
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <a asp-action="UserDetails" asp-route-id="@user.UserId" class="text-xs font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors">Details</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Revenue Chart
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: @Json.Serialize(Model.RevenueLast7Days.Select(r => r.Day)),
+                datasets: [{
+                    label: 'Revenue',
+                    data: @Json.Serialize(Model.RevenueLast7Days.Select(r => r.Amount)),
+                    borderColor: '#C65D3B',
+                    backgroundColor: 'rgba(198, 93, 59, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { display: false } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    </script>
+}

@@ -1,0 +1,150 @@
+﻿@model VenueBooking.ViewModels.AdminThemesViewModel
+@{
+    ViewData["Title"] = "Themes Management";
+    Layout = "_AdminLayout";
+}
+
+<div class="max-w-[1400px] mx-auto">
+    <!-- Header -->
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Themes Management</h2>
+            <p class="text-slate-500 mt-1 text-sm">Manage venue themes and decorations</p>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-8">
+        <div class="bg-card-bg dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <p class="text-sm font-medium text-slate-500">Total Themes</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalThemes</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <p class="text-sm font-medium text-slate-500">Active</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.ActiveThemes</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <p class="text-sm font-medium text-slate-500">Categories</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalCategories</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <p class="text-sm font-medium text-slate-500">Venues Using</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.VenuesUsingThemes</h3>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-card-bg dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
+        <div class="flex flex-col sm:flex-row gap-4">
+            <div class="relative flex-1 max-w-md">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                <input type="text" id="searchThemes" placeholder="Search themes..."
+                       class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+            </div>
+            <select id="categoryFilter" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20">
+                <option value="All">All Categories</option>
+                @foreach (var cat in Model.Categories)
+                {
+                    <option value="@cat">@cat</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <!-- Themes Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="themesGrid">
+        @foreach (var theme in Model.Themes)
+        {
+            <div class="theme-card bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden"
+                 data-name="@theme.ThemeName.ToLower()" data-venue="@theme.VenueName.ToLower()">
+                <div class="h-48 bg-slate-200 dark:bg-slate-800 relative">
+                    @if (!string.IsNullOrEmpty(theme.CoverImageUrl))
+                    {
+                        <img src="@theme.CoverImageUrl" class="w-full h-full object-cover" alt="@theme.ThemeName"
+                             onerror="this.src='/images/default-theme.jpg'" />
+                    }
+                    else
+                    {
+                        <div class="w-full h-full flex items-center justify-center text-slate-400">
+                            <span class="material-symbols-outlined text-6xl">image</span>
+                        </div>
+                    }
+                    <div class="absolute top-3 right-3 flex gap-2">
+                        <button onclick="deleteTheme(@theme.ThemeId)" class="p-2 bg-white dark:bg-slate-900 rounded-lg shadow-sm hover:bg-red-500 hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-sm">delete</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-5">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white truncate mr-2">@theme.ThemeName</h3>
+                        <span class="flex-shrink-0 px-2 py-1 rounded-md text-xs font-bold @(theme.IsActive ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-600")">
+                            @(theme.IsActive ? "Active" : "Inactive")
+                        </span>
+                    </div>
+                    <p class="text-sm text-slate-500 mb-3 line-clamp-2">@(theme.Description ?? "No description")</p>
+                    <div class="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-400 mb-3">
+                        <span class="material-symbols-outlined text-sm">location_on</span>
+                        <span class="truncate">@theme.VenueName</span>
+                    </div>
+
+                    <!-- All pricings per event type -->
+                    @if (theme.Pricings != null && theme.Pricings.Any())
+                    {
+                        <div class="pt-3 border-t border-slate-100 dark:border-slate-800">
+                            <p class="text-xs text-slate-400 mb-2">Pricing per Day</p>
+                            <div class="flex flex-wrap gap-1.5">
+                                @foreach (var pricing in theme.Pricings.OrderBy(p => p.PricePerDay))
+                                {
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs">
+                                        <span class="text-slate-500">@pricing.EventType:</span>
+                                        <span class="font-bold text-primary">₹@pricing.PricePerDay.ToString("N0")</span>
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="pt-3 border-t border-slate-100 dark:border-slate-800">
+                            <p class="text-sm text-slate-400">No pricing set</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Themes.Any())
+    {
+        <div class="bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center">
+            <span class="material-symbols-outlined text-5xl text-slate-300 mb-3">palette</span>
+            <h4 class="text-lg font-bold text-slate-700 dark:text-slate-300 mb-2">No Themes Found</h4>
+            <p class="text-slate-500">Themes created by owners will appear here.</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Search filter
+        document.getElementById('searchThemes').addEventListener('input', function () {
+            var term = this.value.toLowerCase();
+            document.querySelectorAll('.theme-card').forEach(function (card) {
+                var name = card.dataset.name || '';
+                var venue = card.dataset.venue || '';
+                card.style.display = (name.includes(term) || venue.includes(term)) ? '' : 'none';
+            });
+        });
+
+        // Delete theme
+        function deleteTheme(id) {
+            if (confirm('Delete this theme? This action cannot be undone.')) {
+                fetch('/Admin/DeleteTheme/' + id, { method: 'POST' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) { if (data.success) location.reload(); else alert('Failed to delete.'); })
+                    .catch(function () { alert('Network error.'); });
+            }
+        }
+    </script>
+}

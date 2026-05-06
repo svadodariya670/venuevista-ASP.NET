@@ -1,0 +1,114 @@
+﻿@{
+    ViewData["Title"] = "Join as a Venue Owner";
+}
+
+<div class="bg-background-light min-h-screen flex items-center justify-center px-4 py-12">
+    <div class="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+
+        <!-- Left Side -->
+        <div class="hidden lg:block space-y-8">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary-sage/10 text-secondary-sage text-xs font-bold uppercase tracking-wider">
+                <span class="material-symbols-outlined text-sm">verified_user</span>
+                Trusted by 5,000+ Owners
+            </div>
+
+            <h2 class="text-5xl font-black leading-tight text-text-main">
+                List your property and reach <span class="text-primary">thousands</span> of event planners.
+            </h2>
+
+            <p class="text-lg text-text-main/70 max-w-md leading-relaxed">
+                Join the world's most premium venue marketplace. Manage bookings, payments, and communication in one place.
+            </p>
+        </div>
+
+        <!-- Registration Card -->
+        <div class="bg-white p-8 lg:p-10 rounded-lg shadow-xl border border-primary/5">
+            <div class="mb-8">
+                <h3 class="text-2xl font-bold mb-2">Join as a Venue Owner</h3>
+                <p class="text-text-main/60 text-sm">Start your journey today.</p>
+            </div>
+
+            <!-- Validation Summary -->
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="text-red-500 text-sm mb-4">
+                    @Html.ValidationSummary()
+                </div>
+            }
+
+            <form action="/Auth/JoinNow" method="post" class="space-y-5">
+                @Html.AntiForgeryToken()
+
+                <div class="grid grid-cols-1 gap-5">
+
+                    <!-- Name -->
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-semibold text-text-main/80">Owner Full Name</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-main/40 text-lg">person</span>
+                            <input name="Name" type="text" required maxlength="100"
+                                   class="form-input w-full pl-10 pr-4 py-3 bg-background-light/30 border border-primary/10 rounded-lg"
+                                   placeholder="e.g. John Doe" />
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-semibold text-text-main/80">Email Address</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-main/40 text-lg">mail</span>
+                            <input name="Email" type="email" required maxlength="150"
+                                   class="form-input w-full pl-10 pr-4 py-3 bg-background-light/30 border border-primary/10 rounded-lg"
+                                   placeholder="john@example.com" />
+                        </div>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-semibold text-text-main/80">Phone Number</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-main/40 text-lg">call</span>
+                            <input name="Phone" type="tel" maxlength="20"
+                                   class="form-input w-full pl-10 pr-4 py-3 bg-background-light/30 border border-primary/10 rounded-lg"
+                                   placeholder="+91 98765 43210" />
+                        </div>
+                    </div>
+
+                    <!-- Password (PasswordHash) -->
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-semibold text-text-main/80">Create Password</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-main/40 text-lg">lock</span>
+                            <input name="PasswordHash" type="password" required maxlength="255"
+                                   class="form-input w-full pl-10 pr-4 py-3 bg-background-light/30 border border-primary/10 rounded-lg"
+                                   placeholder="••••••••" />
+                        </div>
+                    </div>
+
+                    <!-- Confirm Password (Password) -->
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-semibold text-text-main/80">Confirm Password</label>
+                        <input name="Password" type="password" required maxlength="255"
+                               class="form-input w-full px-4 py-3 bg-background-light/30 border border-primary/10 rounded-lg"
+                               placeholder="••••••••" />
+                    </div>
+
+                    <!-- Terms -->
+                    <label class="flex items-center gap-2 text-sm text-text-main/70">
+                        <input name="AcceptTerms" type="checkbox" value="true" required />
+                        I agree to Terms & Privacy Policy
+                    </label>
+
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit"
+                            class="w-full bg-primary text-white py-4 rounded-lg font-bold text-lg shadow-lg shadow-primary/20">
+                        Join Now
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>

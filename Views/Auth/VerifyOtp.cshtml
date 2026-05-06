@@ -1,0 +1,123 @@
+﻿@{
+    ViewData["Title"] = "Verify OTP - VenueBooking";
+}
+
+<div class="bg-background-light min-h-screen flex flex-col">
+    <!-- Main Content Area -->
+    <main class="flex-1 flex items-center justify-center p-6">
+        <div class="max-w-md w-full bg-white rounded-xl shadow-xl shadow-primary/5 p-8 border border-slate-100">
+            <!-- Icon/Visual Header -->
+            <div class="flex flex-col items-center text-center mb-8">
+                <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                    <span class="material-symbols-outlined text-primary text-3xl">mark_email_read</span>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">Verify Your OTP</h2>
+                <p class="text-slate-500 text-sm leading-relaxed">
+                    We've sent a 6-digit code to your registered device. <br />Enter it below to continue.
+                </p>
+            </div>
+
+            <!-- OTP Input Form -->
+            <form action="/Auth/VerifyOtp" method="post" class="space-y-8" id="otpForm">
+                @Html.AntiForgeryToken()
+
+                <div class="flex justify-between gap-2">
+                    <input name="otpDigit1" type="text" maxlength="1" inputmode="numeric" autocomplete="one-time-code"
+                           class="w-12 h-14 text-center text-2xl font-bold bg-slate-50 border-2 border-slate-200 rounded-lg focus:border-primary focus:ring-0 text-slate-900 transition-all outline-none otp-input"
+                           placeholder="·" required />
+                    <input name="otpDigit2" type="text" maxlength="1" inputmode="numeric"
+                           class="w-12 h-14 text-center text-2xl font-bold bg-slate-50 border-2 border-slate-200 rounded-lg focus:border-primary focus:ring-0 text-slate-900 transition-all outline-none otp-input"
+                           placeholder="·" required />
+                    <input name="otpDigit3" type="text" maxlength="1" inputmode="numeric"
+                           class="w-12 h-14 text-center text-2xl font-bold bg-slate-50 border-2 border-slate-200 rounded-lg focus:border-primary focus:ring-0 text-slate-900 transition-all outline-none otp-input"
+                           placeholder="·" required />
+                    <input name="otpDigit4" type="text" maxlength="1" inputmode="numeric"
+                           class="w-12 h-14 text-center text-2xl font-bold bg-slate-50 border-2 border-slate-200 rounded-lg focus:border-primary focus:ring-0 text-slate-900 transition-all outline-none otp-input"
+                           placeholder="·" required />
+                    <input name="otpDigit5" type="text" maxlength="1" inputmode="numeric"
+                           class="w-12 h-14 text-center text-2xl font-bold bg-slate-50 border-2 border-slate-200 rounded-lg focus:border-primary focus:ring-0 text-slate-900 transition-all outline-none otp-input"
+                           placeholder="·" required />
+                    <input name="otpDigit6" type="text" maxlength="1" inputmode="numeric"
+                           class="w-12 h-14 text-center text-2xl font-bold bg-slate-50 border-2 border-slate-200 rounded-lg focus:border-primary focus:ring-0 text-slate-900 transition-all outline-none otp-input"
+                           placeholder="·" required />
+                </div>
+
+                <!-- Hidden field to store combined OTP -->
+                <input type="hidden" name="otp" id="fullOtp" />
+
+                <div class="space-y-4">
+                    <button type="submit"
+                            class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-lg shadow-lg shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                        <span class="font-semibold">Verify OTP</span>
+                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                    </button>
+
+                    <div class="text-center pt-2">
+                        <p class="text-slate-500 text-sm">
+                            Didn't receive the code?
+                            <a href="/Auth/ForgotPassword" class="text-primary font-semibold hover:underline ml-1 inline-flex items-center">
+                                Resend Code
+                                <span class="material-symbols-outlined text-xs ml-0.5">refresh</span>
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Decorative Element -->
+            <div class="mt-12 pt-6 border-t border-slate-100 flex items-center justify-center gap-6">
+                <div class="flex items-center gap-2 text-xs text-slate-400 uppercase tracking-widest font-semibold">
+                    <span class="material-symbols-outlined text-base">security</span>
+                    Secure Verification
+                </div>
+            </div>
+
+            <div class="mt-8 flex flex-col items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-10 h-1.5 bg-primary rounded-full"></div>
+                    <div class="w-10 h-1.5 bg-primary rounded-full"></div>
+                    <div class="w-10 h-1.5 bg-primary/20 rounded-full"></div>
+                </div>
+                <p class="text-[10px] font-bold text-slate-900 uppercase tracking-[0.2em]">Step 2 of 3</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-focus and auto-submit OTP inputs
+        const otpInputs = document.querySelectorAll('.otp-input');
+        const otpForm = document.getElementById('otpForm');
+        const fullOtpField = document.getElementById('fullOtp');
+
+        otpInputs.forEach((input, index) => {
+            // Auto-focus next input
+            input.addEventListener('input', (e) => {
+                if (e.target.value.length === 1) {
+                    if (index < otpInputs.length - 1) {
+                        otpInputs[index + 1].focus();
+                    }
+                }
+
+                // Combine all digits
+                const otpValue = Array.from(otpInputs).map(i => i.value).join('');
+                fullOtpField.value = otpValue;
+            });
+
+            // Handle backspace
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                    otpInputs[index - 1].focus();
+                }
+            });
+
+            // Only allow numbers
+            input.addEventListener('keypress', (e) => {
+                if (!/[0-9]/.test(e.key)) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+}

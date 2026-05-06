@@ -1,0 +1,498 @@
+﻿@model VenueBooking.Models.Booking
+@using VenueBooking.Models.Enums
+@{
+    ViewData["Title"] = $"Booking #{Model.BookingId}";
+    Layout = "_OwnerLayout";
+
+    var isPending = Model.Status == BookingStatus.Pending;
+    var isContacted = Model.Status == BookingStatus.Contacted;
+    var isConfirmed = Model.Status == BookingStatus.Confirmed;
+    var isCancelled = Model.Status == BookingStatus.Cancelled;
+    var isRejected = Model.Status == BookingStatus.Rejected;
+    var isCompleted = Model.Status == BookingStatus.Completed;
+    var canAct = isPending || isContacted;
+
+    var statusColor = Model.Status switch
+    {
+        BookingStatus.Confirmed => "bg-emerald-100 text-emerald-700",
+        BookingStatus.Pending => "bg-amber-100 text-amber-700",
+        BookingStatus.Contacted => "bg-blue-100 text-blue-700",
+        BookingStatus.Rejected => "bg-red-100 text-red-700",
+        BookingStatus.Cancelled => "bg-red-100 text-red-700",
+        BookingStatus.Completed => "bg-blue-100 text-blue-700",
+        _ => "bg-slate-100 text-slate-700"
+    };
+
+    var paymentColor = Model.PaymentStatus switch
+    {
+        PaymentStatus.Completed => "bg-emerald-100 text-emerald-700",
+        PaymentStatus.Pending => "bg-amber-100 text-amber-700",
+        PaymentStatus.Partial => "bg-blue-100 text-blue-700",
+        PaymentStatus.Refunded => "bg-purple-100 text-purple-700",
+        _ => "bg-slate-100 text-slate-700"
+    };
+
+    var venue = Model.Venue;
+    var customer = Model.Customer;
+    var coverImage = venue?.Images?.FirstOrDefault(i => i.IsCover)?.ImageUrl
+                     ?? venue?.Images?.FirstOrDefault()?.ImageUrl
+                     ?? "/images/default-venue.jpg";
+
+    var totalPaid = Model.Payments?.Where(p => p.Status == PaymentStatus.Completed).Sum(p => p.Amount) ?? 0;
+    var remainingAmount = Model.TotalPrice - totalPaid;
+    var canRecordPayment = !isCancelled && !isRejected && remainingAmount > 0;
+}
+
+<div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
+        <a href="@Url.Action("Bookings")" class="p-2 hover:bg-white rounded-lg transition-colors self-start">
+            <span class="material-symbols-outlined text-slate-600">arrow_back</span>
+        </a>
+        <div class="flex-1">
+            <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Booking #@Model.BookingId</h1>
+            <p class="text-slate-500 mt-1 text-sm">Received on @Model.CreatedAt.ToString("MMM dd, yyyy 'at' hh:mm tt")</p>
+        </div>
+        <span class="px-4 py-2 rounded-full text-sm font-bold uppercase @statusColor self-start sm:self-auto">@Model.Status</span>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span class="text-sm font-medium">@TempData["Success"]</span>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 flex items-center gap-2">
+            <span class="material-symbols-outlined">error</span>
+            <span class="text-sm font-medium">@TempData["Error"]</span>
+        </div>
+    }
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+        <!-- Main Details -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Customer Info -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6">
+                <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">person</span>
+                    Customer Information
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium uppercase mb-1">Name</p>
+                        <p class="font-semibold text-slate-900 text-sm">@(customer?.Name ?? "Unknown")</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium uppercase mb-1">Email</p>
+                        <p class="font-semibold text-slate-900 text-sm">@(customer?.Email ?? "—")</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium uppercase mb-1">Phone</p>
+                        <p class="font-semibold text-slate-900 text-sm">@(customer?.Phone ?? "—")</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Venue Card -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="flex flex-col sm:flex-row">
+                    <img src="@coverImage" class="w-full sm:w-48 h-40 object-cover" onerror="this.src='/images/default-venue.jpg'" alt="@venue?.VenueName">
+                    <div class="p-5 flex-1">
+                        <h3 class="text-lg sm:text-xl font-bold text-slate-900">@(venue?.VenueName ?? "Unknown Venue")</h3>
+                        <p class="text-slate-500 flex items-center gap-1 mt-1 text-sm">
+                            <span class="material-symbols-outlined text-sm">location_on</span>
+                            @venue?.Address, @venue?.City, @venue?.State
+                        </p>
+                        <p class="text-slate-500 flex items-center gap-1 mt-1 text-sm">
+                            <span class="material-symbols-outlined text-sm">groups</span>
+                            Capacity: @venue?.Capacity guests
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Details -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6">
+                <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">celebration</span>
+                    Event Details
+                </h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium uppercase mb-1">Event Type</p>
+                        <p class="font-semibold text-slate-900 text-sm">@Model.EventType</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium uppercase mb-1">Event Date</p>
+                        <p class="font-semibold text-slate-900 text-sm">@Model.StartDate.ToString("MMM dd, yyyy (ddd)")</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium uppercase mb-1">Duration</p>
+                        <p class="font-semibold text-slate-900 text-sm">@Model.TotalDays day(s)</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium uppercase mb-1">Theme</p>
+                        <p class="font-semibold text-slate-900 text-sm">@(Model.Theme?.ThemeName ?? "N/A")</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium uppercase mb-1">Booking Source</p>
+                        <p class="font-semibold text-slate-900 text-sm">@Model.BookingSource</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium uppercase mb-1">Booking ID</p>
+                        <p class="font-semibold text-slate-900 text-sm font-mono">#@Model.BookingId</p>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.SpecialRequests))
+                {
+                    <div class="mt-6 pt-4 border-t border-slate-100">
+                        <p class="text-xs text-slate-400 font-medium uppercase mb-2">Special Requests</p>
+                        <p class="text-slate-700 bg-amber-50 border border-amber-100 p-3 rounded-lg text-sm">@Model.SpecialRequests</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Payment History -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">payments</span>
+                        Payment History
+                    </h3>
+                    @if (canRecordPayment)
+                    {
+                        <button onclick="openPaymentModal()"
+                                class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors flex items-center gap-2">
+                            <span class="material-symbols-outlined text-lg">add_circle</span>
+                            Record Payment
+                        </button>
+                    }
+                </div>
+
+                @if (Model.Payments != null && Model.Payments.Any())
+                {
+                    <div class="overflow-x-auto -mx-2">
+                        <table class="w-full text-left min-w-[500px]">
+                            <thead>
+                                <tr class="border-b border-slate-100">
+                                    <th class="py-2 px-2 text-xs text-slate-400 uppercase font-medium">Date</th>
+                                    <th class="py-2 px-2 text-xs text-slate-400 uppercase font-medium">Method</th>
+                                    <th class="py-2 px-2 text-xs text-slate-400 uppercase font-medium">Transaction ID</th>
+                                    <th class="py-2 px-2 text-xs text-slate-400 uppercase font-medium">Amount</th>
+                                    <th class="py-2 px-2 text-xs text-slate-400 uppercase font-medium">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var payment in Model.Payments.OrderByDescending(p => p.CreatedAt))
+                                {
+                                    <tr class="border-b border-slate-50">
+                                        <td class="py-3 px-2 text-sm">@(payment.PaidAt?.ToString("MMM dd, yyyy") ?? "—")</td>
+                                        <td class="py-3 px-2 text-sm">
+                                            <span class="inline-flex items-center gap-1">
+                                                <span class="material-symbols-outlined text-sm text-slate-400">
+                                                    @(payment.PaymentMethod switch
+                                                    {
+                                                        "Cash" => "payments",
+                                                        "UPI" => "smartphone",
+                                                        "Bank Transfer" => "account_balance",
+                                                        "Cheque" => "description",
+                                                        _ => "credit_card"
+                                                    })
+                                                </span>
+                                                @(payment.PaymentMethod ?? "—")
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-2 text-sm font-mono text-xs">@(payment.TransactionId ?? "—")</td>
+                                <td class="py-3 px-2 text-sm font-bold">₹@payment.Amount.ToString("N0")</td>
+                                        <td class="py-3 px-2">
+                                            <span class="px-2 py-0.5 rounded text-xs font-bold
+                                                @(payment.Status == PaymentStatus.Completed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")">
+                                                @payment.Status
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-8">
+                        <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">receipt_long</span>
+                        <p class="text-slate-500 text-sm">No payments recorded yet</p>
+                        @if (canRecordPayment)
+                        {
+                            <p class="text-slate-400 text-xs mt-1">Click "Record Payment" to add a payment entry</p>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="lg:col-span-1 space-y-6">
+            <!-- Price Summary -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <h3 class="text-lg font-bold text-slate-900 mb-4">Price Summary</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Total Price</span>
+                        <span class="text-2xl font-black text-primary">₹@Model.TotalPrice.ToString("N0")</span>
+                    </div>
+                    <div class="flex justify-between pt-2 border-t border-slate-100">
+                        <span class="text-slate-500">Payment</span>
+                        <span class="px-2 py-0.5 rounded text-xs font-bold @paymentColor">@Model.PaymentStatus</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Collected</span>
+                        <span class="font-semibold text-emerald-600">₹@totalPaid.ToString("N0")</span>
+                    </div>
+                    @if (remainingAmount > 0)
+                    {
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Remaining</span>
+                            <span class="font-semibold text-amber-600">?@remainingAmount.ToString("N0")</span>
+                        </div>
+                        <!-- Progress bar -->
+                        <div class="pt-2">
+                            @{ var paidPercent = Model.TotalPrice > 0 ? (double)totalPaid / (double)Model.TotalPrice * 100 : 0; }
+                            <div class="flex justify-between text-xs text-slate-400 mb-1">
+                                <span>Payment Progress</span>
+                                <span>@paidPercent.ToString("F0")%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-2">
+                                <div class="bg-emerald-500 h-2 rounded-full transition-all" style="width: @paidPercent.ToString("F0")%"></div>
+                            </div>
+                        </div>
+                    }
+                    else if (totalPaid > 0)
+                    {
+                        <div class="flex items-center gap-2 pt-2 text-emerald-600">
+                            <span class="material-symbols-outlined">verified</span>
+                            <span class="text-sm font-bold">Fully Paid</span>
+                        </div>
+                    }
+                </div>
+
+                @if (canRecordPayment)
+                {
+                    <button onclick="openPaymentModal()"
+                            class="w-full mt-4 py-3 bg-primary/10 text-primary rounded-lg font-bold hover:bg-primary/20 transition-colors flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">add_circle</span>
+                        Record Payment
+                    </button>
+                }
+            </div>
+
+            <!-- Actions -->
+            @if (canAct)
+            {
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                    <h3 class="text-lg font-bold text-slate-900 mb-4">Actions</h3>
+                    <div class="space-y-3">
+                        <form asp-action="ConfirmBooking" asp-route-id="@Model.BookingId" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="w-full py-3 bg-emerald-50 text-emerald-700 rounded-lg font-bold hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2"
+                                    onclick="return confirm('Confirm this booking? The date will be blocked.')">
+                                <span class="material-symbols-outlined">check_circle</span>
+                                Confirm Booking
+                            </button>
+                        </form>
+                        <button onclick="document.getElementById('rejectModal').classList.remove('hidden'); document.getElementById('rejectModal').classList.add('flex');"
+                                class="w-full py-3 bg-red-50 text-red-600 rounded-lg font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">cancel</span>
+                            Reject Booking
+                        </button>
+                    </div>
+                </div>
+            }
+
+            <!-- Timeline -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <h3 class="text-lg font-bold text-slate-900 mb-4">Timeline</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Created</span>
+                        <span class="font-semibold">@Model.CreatedAt.ToString("MMM dd, yyyy")</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Updated</span>
+                        <span class="font-semibold">@Model.UpdatedAt.ToString("MMM dd, yyyy")</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Event Date</span>
+                        <span class="font-semibold">@Model.StartDate.ToString("MMM dd, yyyy")</span>
+                    </div>
+                    @{
+                        var daysUntilEvent = (Model.StartDate.Date - DateTime.Today).Days;
+                    }
+                    @if (daysUntilEvent > 0)
+                    {
+                        <div class="flex justify-between pt-2 border-t border-slate-100">
+                            <span class="text-slate-500">Days Until</span>
+                            <span class="font-bold text-primary">@daysUntilEvent days</span>
+                        </div>
+                    }
+                    else if (daysUntilEvent == 0)
+                    {
+                        <div class="flex justify-between pt-2 border-t border-slate-100">
+                            <span class="text-slate-500">Event</span>
+                            <span class="font-bold text-emerald-600">Today!</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Record Payment Modal -->
+@if (canRecordPayment)
+{
+    <div id="paymentModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">add_card</span>
+                    Record Payment
+                </h3>
+                <button onclick="closePaymentModal()" class="p-1 text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- Remaining info -->
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-amber-700 font-medium">Remaining Balance</span>
+                    <span class="text-xl font-black text-amber-700">?@remainingAmount.ToString("N0")</span>
+                </div>
+                <div class="flex justify-between items-center mt-1">
+                    <span class="text-xs text-amber-600">Total: ?@Model.TotalPrice.ToString("N0")</span>
+                    <span class="text-xs text-amber-600">Paid: ?@totalPaid.ToString("N0")</span>
+                </div>
+            </div>
+
+            <form asp-action="RecordPayment" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="bookingId" value="@Model.BookingId" />
+
+                <div class="space-y-4">
+                    <!-- Amount -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Amount (?) *</label>
+                        <input type="number" name="amount" step="0.01" min="1" max="@remainingAmount" required
+                               value="@remainingAmount"
+                               class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                               placeholder="Enter amount received" />
+                        <p class="text-xs text-slate-400 mt-1">Max: ?@remainingAmount.ToString("N0")</p>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Payment Method *</label>
+                        <select name="paymentMethod" required
+                                class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm">
+                            <option value="Cash">?? Cash</option>
+                            <option value="UPI">?? UPI (GPay / PhonePe / Paytm)</option>
+                            <option value="Bank Transfer">?? Bank Transfer (NEFT/IMPS)</option>
+                            <option value="Cheque">?? Cheque</option>
+                            <option value="Card">?? Card (Swipe Machine)</option>
+                            <option value="Other">?? Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Transaction ID (optional) -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Transaction / Reference ID</label>
+                        <input type="text" name="transactionId"
+                               class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                               placeholder="e.g., UPI ref no., cheque no." />
+                        <p class="text-xs text-slate-400 mt-1">Optional — auto-generated if left blank</p>
+                    </div>
+
+                    <!-- Notes (optional) -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Notes</label>
+                        <textarea name="notes" rows="2"
+                                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                                  placeholder="Any additional notes..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="closePaymentModal()"
+                            class="flex-1 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                            onclick="return confirm('Record this payment? This action cannot be undone.')">
+                        <span class="material-symbols-outlined text-lg">check</span>
+                        Record Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+<!-- Reject Modal -->
+@if (canAct)
+{
+    <div id="rejectModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Reject Booking</h3>
+            <form asp-action="RejectBooking" asp-route-id="@Model.BookingId" method="post">
+                @Html.AntiForgeryToken()
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Reason for rejection *</label>
+                    <textarea name="rejectionReason" rows="3" required
+                              class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary"
+                              placeholder="Please provide a reason..."></textarea>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button"
+                            onclick="document.getElementById('rejectModal').classList.add('hidden'); document.getElementById('rejectModal').classList.remove('flex');"
+                            class="flex-1 py-2.5 border border-slate-200 rounded-lg font-bold text-slate-600 hover:bg-slate-50">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 py-2.5 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700">
+                        Reject
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function openPaymentModal() {
+            document.getElementById('paymentModal').classList.remove('hidden');
+            document.getElementById('paymentModal').classList.add('flex');
+        }
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.add('hidden');
+            document.getElementById('paymentModal').classList.remove('flex');
+        }
+    </script>
+    <!-- Message Customer -->
+    @if (customer != null)
+    {
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">Communication</h3>
+            <a asp-action="Conversation" asp-route-customerId="@customer.UserId"
+               class="w-full py-3 bg-blue-50 text-blue-700 rounded-lg font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">chat</span>
+                Message Customer
+            </a>
+        </div>
+    }
+}

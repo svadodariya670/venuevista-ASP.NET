@@ -1,0 +1,210 @@
+@using VenueBooking.Models.Enums
+@model VenueBooking.ViewModels.AdminOwnerSubscriptionsViewModel
+@{
+    ViewData["Title"] = "Owner Subscriptions";
+    Layout = "_AdminLayout";
+}
+
+<div class="max-w-[1400px] mx-auto">
+    <!-- Header -->
+    <div class="mb-8 flex items-end justify-between">
+        <div>
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Owner Subscriptions</h2>
+            <p class="text-slate-500 mt-1">View and manage all active owner subscription plans</p>
+        </div>
+        <div class="flex gap-3">
+            <a asp-action="OwnerSubscriptions" asp-route-status="All"
+               class="px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
+                All
+            </a>
+            <a asp-action="OwnerSubscriptions" asp-route-status="Active"
+               class="px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
+                Active
+            </a>
+            <a asp-action="OwnerSubscriptions" asp-route-status="Expired"
+               class="px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800">
+                Expired
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
+                    <span class="material-symbols-outlined">card_membership</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Total Subscriptions</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalSubscriptions</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg">
+                    <span class="material-symbols-outlined">check_circle</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Active Subscriptions</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.ActiveSubscriptions</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-lg">
+                    <span class="material-symbols-outlined">timer_off</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Expired</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.ExpiredSubscriptions</h3>
+        </div>
+        <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-lg">
+                    <span class="material-symbols-outlined">payments</span>
+                </div>
+            </div>
+            <p class="text-sm font-medium text-slate-500">Total Revenue</p>
+            <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">@Model.TotalRevenue.ToString("C0")</h3>
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="bg-card-bg dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6">
+        <div class="relative max-w-md">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+            <input type="text" id="searchSubs" placeholder="Search by owner name or email..."
+                   class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20" />
+        </div>
+    </div>
+
+    <!-- Subscriptions Table -->
+    <div class="bg-card-bg dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4">Owner</th>
+                        <th class="px-6 py-4">Plan</th>
+                        <th class="px-6 py-4">Period</th>
+                        <th class="px-6 py-4">Venues</th>
+                        <th class="px-6 py-4">Payment</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                    @if (Model.Subscriptions.Any())
+                    {
+                        @foreach (var sub in Model.Subscriptions)
+                        {
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                                            @(sub.OwnerName.Length >= 2 ? sub.OwnerName[..2].ToUpper() : sub.OwnerName.ToUpper())
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-bold text-slate-900 dark:text-white">@sub.OwnerName</p>
+                                            <p class="text-xs text-slate-500">@sub.OwnerEmail</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="text-sm font-semibold text-slate-900 dark:text-white">@sub.PlanName</p>
+                                    <p class="text-xs text-primary font-bold">@sub.PlanPrice.ToString("C0")</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="text-sm text-slate-600 dark:text-slate-300">@sub.StartDate.ToString("MMM dd, yyyy")</p>
+                                    <p class="text-xs text-slate-500">to @sub.EndDate.ToString("MMM dd, yyyy")</p>
+                                    @if (!sub.IsExpired)
+                                    {
+                                        <p class="text-xs text-emerald-600 font-bold mt-1">@sub.DaysRemaining days left</p>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-xs text-red-500 font-bold mt-1">Expired</p>
+                                    }
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-sm font-bold text-slate-900 dark:text-white">@sub.CurrentVenueCount</span>
+                                        <span class="text-xs text-slate-500">/ @sub.MaxVenuesAllowed</span>
+                                    </div>
+                                    <div class="w-20 bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-1 overflow-hidden">
+                                        @{
+                                            var pct = sub.MaxVenuesAllowed > 0 ? (double)sub.CurrentVenueCount / sub.MaxVenuesAllowed * 100 : 0;
+                                        }
+                                        <div class="bg-primary h-full rounded-full" style="width: @pct%"></div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 rounded-md text-xs font-bold
+                                        @(sub.PaymentStatus == PaymentStatus.Completed ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600" :
+                                          sub.PaymentStatus == PaymentStatus.Pending ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" :
+                                          "bg-red-100 dark:bg-red-900/30 text-red-600")">
+                                        @sub.PaymentStatus
+                                    </span>
+                                    @if (!string.IsNullOrEmpty(sub.TransactionId))
+                                    {
+                                        <p class="text-[10px] text-slate-400 mt-1 font-mono">@sub.TransactionId</p>
+                                    }
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 rounded-md text-xs font-bold
+                                        @(sub.IsActive && !sub.IsExpired ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600" :
+                                          sub.IsExpired ? "bg-red-100 dark:bg-red-900/30 text-red-600" :
+                                          "bg-slate-100 dark:bg-slate-800 text-slate-600")">
+                                        @(sub.IsActive && !sub.IsExpired ? "Active" : sub.IsExpired ? "Expired" : "Inactive")
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <button onclick="toggleSubscription(@sub.SubscriptionId, @(sub.IsActive ? "true" : "false"))"
+                                            class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
+                                            title="@(sub.IsActive ? "Deactivate" : "Activate")">
+                                        <span class="material-symbols-outlined text-lg">@(sub.IsActive ? "toggle_on" : "toggle_off")</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center">
+                                <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">card_membership</span>
+                                <p class="text-slate-500">No subscriptions found.</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+            <p class="text-sm text-slate-500">Showing @Model.Subscriptions.Count of @Model.TotalSubscriptions subscriptions</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('searchSubs').addEventListener('input', function () {
+            const term = this.value.toLowerCase();
+            document.querySelectorAll('tbody tr').forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+
+        function toggleSubscription(id, isActive) {
+            const action = isActive ? 'deactivate' : 'activate';
+            if (!confirm(`Are you sure you want to ${action} this subscription?`)) return;
+
+            fetch(`/Admin/ToggleSubscriptionStatus/${id}`, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) location.reload();
+                    else alert('Failed to update subscription.');
+                });
+        }
+    </script>
+}

@@ -1,0 +1,21 @@
+@model VenueBooking.Models.Booking
+@using VenueBooking.Models.Enums
+@{
+    ViewData["Title"] = "Payment";
+    Layout = "_CustomerLayout";
+}
+
+<div class="max-w-lg mx-auto text-center py-20">
+    <div class="size-20 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 mx-auto mb-6">
+        <span class="material-symbols-outlined text-4xl">info</span>
+    </div>
+    <h2 class="text-2xl font-bold text-slate-900 mb-3">Payments Handled by Venue Owner</h2>
+    <p class="text-slate-500 max-w-md mx-auto mb-6">
+        Online payment is not available. Please pay the venue owner directly via Cash, UPI, or Bank Transfer.
+        The owner will record your payment and it will be reflected in your booking details.
+    </p>
+    <a asp-action="Bookings" class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors">
+        <span class="material-symbols-outlined">arrow_back</span>
+        Back to My Bookings
+    </a>
+</div>

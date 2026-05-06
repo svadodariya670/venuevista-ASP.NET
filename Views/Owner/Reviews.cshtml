@@ -1,0 +1,231 @@
+﻿@model VenueBooking.ViewModels.ReviewsDashboardViewModel
+@{
+    ViewData["Title"] = "Reviews Management";
+    Layout = "_OwnerLayout";
+}
+
+<div class="min-h-screen bg-background-light py-8">
+    <div class="max-w-6xl mx-auto px-4">
+
+        <!-- Header Section -->
+        <header class="mb-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-3xl font-bold text-text-main">Reviews Management</h2>
+                    <p class="text-slate-500 mt-1">Monitor guest feedback and maintain your venue's reputation.</p>
+                </div>
+                <div class="flex gap-4">
+                    <!-- Average Rating Card -->
+                    <div class="bg-white p-4 rounded-xl border border-primary/10 shadow-sm flex flex-col items-center min-w-[120px]">
+                        <span class="text-2xl font-bold text-primary">@Model.AverageRating.ToString("F1")</span>
+                        <div class="flex text-primary text-xs">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= Math.Floor(Model.AverageRating))
+                                {
+                                    <span class="material-symbols-outlined text-xs fill-1">star</span>
+                                }
+                                else if (i - 0.5 <= Model.AverageRating)
+                                {
+                                    <span class="material-symbols-outlined text-xs fill-1">star_half</span>
+                                }
+                                else
+                                {
+                                    <span class="material-symbols-outlined text-xs">star</span>
+                                }
+                            }
+                        </div>
+                        <span class="text-[10px] text-slate-400 uppercase mt-1 font-bold">Avg Rating</span>
+                    </div>
+
+                    <!-- Total Reviews Card -->
+                    <div class="bg-white p-4 rounded-xl border border-primary/10 shadow-sm flex flex-col items-center min-w-[120px]">
+                        <span class="text-2xl font-bold text-secondary">@Model.TotalReviews</span>
+                        <span class="text-green-500 text-[10px] font-bold">+@Model.PendingReplyCount pending</span>
+                        <span class="text-[10px] text-slate-400 uppercase mt-1 font-bold">Total Reviews</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Filters -->
+        <section class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-bold uppercase tracking-widest text-secondary">Filter by Rating</h3>
+                @if (Model.FilterRating.HasValue)
+                {
+                    <a asp-action="Reviews" class="text-xs font-semibold text-primary hover:underline">Clear all filters</a>
+                }
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <a asp-action="Reviews"
+                   class="px-6 py-2 rounded-full @(Model.FilterRating == null ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-primary/10 text-slate-600 hover:border-primary") text-sm font-semibold transition-all">
+                    All
+                </a>
+                @for (int i = 5; i >= 1; i--)
+                {
+                    <a asp-action="Reviews" asp-route-rating="@i"
+                       class="px-6 py-2 rounded-full @(Model.FilterRating == i ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-white border border-primary/10 text-slate-600 hover:border-primary") text-sm font-semibold transition-all flex items-center gap-1">
+                        @i <span class="material-symbols-outlined text-sm leading-none">star</span>
+                    </a>
+                }
+            </div>
+        </section>
+
+        <!-- Review List -->
+        <div class="space-y-6">
+            @if (!Model.Reviews.Any())
+            {
+                <div class="text-center py-12 bg-white rounded-xl border border-primary/10">
+                    <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">rate_review</span>
+                    <h3 class="text-lg font-bold text-slate-600">No reviews yet</h3>
+                    <p class="text-slate-400 text-sm">Reviews will appear here once customers leave feedback.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var review in Model.Reviews)
+                {
+                    <article class="bg-white rounded-xl border border-primary/5 shadow-sm overflow-hidden @(string.IsNullOrEmpty(review.ReplyContent) ? "group hover:shadow-md transition-shadow" : "opacity-90")">
+                        <div class="p-6">
+                            <!-- Review Header -->
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                                        @review.CustomerName.Substring(0, 1).ToUpper()
+                                    </div>
+                                    <div>
+                                        <h4 class="text-base font-bold text-text-main">@review.CustomerName</h4>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs font-semibold text-secondary">@review.VenueName</span>
+                                            <span class="text-[10px] text-slate-400">• @review.TimeAgo</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end">
+                                    <div class="flex text-primary">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            <span class="material-symbols-outlined text-lg @(i <= review.Rating ? "fill-1" : "")">star</span>
+                                        }
+                                    </div>
+                                    @if (string.IsNullOrEmpty(review.ReplyContent))
+                                    {
+                                        <span class="mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100 text-amber-700">Pending Reply</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-green-100 text-green-700">Replied</span>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Review Content -->
+                            <p class="text-slate-600 text-sm leading-relaxed mb-6">
+                                "@review.Comment"
+                            </p>
+
+                            <!-- Reply Section -->
+                            @if (string.IsNullOrEmpty(review.ReplyContent))
+                            {
+                                <!-- Reply Form -->
+                                <div class="mt-4 pt-6 border-t border-slate-100">
+                                    <form asp-action="ReplyToReview" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="ReviewId" value="@review.ReviewId" />
+                                        <div class="relative">
+                                            <textarea name="ReplyContent" required
+                                          class="w-full rounded-lg border-slate-200 focus:ring-primary focus:border-primary text-sm p-4 min-h-[100px] resize-none"
+                                          placeholder="Write your reply to @review.CustomerName..."></textarea>
+                                            <div class="absolute bottom-3 right-3">
+                                                <button type="submit" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
+                                                    Post Reply
+                                                    <span class="material-symbols-outlined text-sm">send</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            }
+                            else
+                            {
+                                <!-- Display Reply -->
+                                <div class="bg-primary/5 rounded-lg p-4 mt-4 border-l-4 border-primary">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <p class="text-[10px] font-bold text-primary uppercase">Your Response</p>
+                                        <button onclick="toggleEditForm(@review.ReviewId)" class="text-[10px] font-bold text-slate-400 hover:text-primary transition-colors">Edit Reply</button>
+                                    </div>
+                                    <p class="text-sm italic text-slate-700" id="reply-text-@review.ReviewId">
+                                        "@review.ReplyContent"
+                                    </p>
+
+                                    <!-- Hidden Edit Form -->
+                                    <form asp-action="EditReply" method="post" id="edit-form-@review.ReviewId" class="hidden mt-3">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="reviewId" value="@review.ReviewId" />
+                                        <textarea name="replyContent" required
+                                      class="w-full rounded-lg border-slate-200 focus:ring-primary focus:border-primary text-sm p-3 min-h-[80px] resize-none mb-2">@review.ReplyContent</textarea>
+                                        <div class="flex gap-2 justify-end">
+                                            <button type="button" onclick="toggleEditForm(@review.ReviewId)" class="text-xs font-bold text-slate-500 hover:text-slate-700 px-3 py-1.5">Cancel</button>
+                                            <button type="submit" class="bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-lg hover:bg-primary/90">Update</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    </article>
+                }
+            }
+        </div>
+
+        <!-- Pagination -->
+        @if (Model.TotalPages > 1)
+        {
+            <footer class="mt-12 flex items-center justify-center gap-4">
+                <a asp-action="Reviews" asp-route-rating="@Model.FilterRating" asp-route-page="@(Model.CurrentPage - 1)"
+                   class="p-2 rounded-lg border border-primary/10 text-slate-400 hover:text-primary hover:border-primary transition-all @(Model.CurrentPage == 1 ? "pointer-events-none opacity-50" : "")">
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </a>
+
+                <div class="flex gap-2">
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        if (i == 1 || i == Model.TotalPages || (i >= Model.CurrentPage - 1 && i <= Model.CurrentPage + 1))
+                        {
+                            <a asp-action="Reviews" asp-route-rating="@Model.FilterRating" asp-route-page="@i"
+                               class="w-10 h-10 rounded-lg font-bold flex items-center justify-center @(i == Model.CurrentPage ? "bg-primary text-white" : "bg-white border border-primary/10 hover:border-primary text-slate-600")">
+                                @i
+                            </a>
+                        }
+                        else if (i == Model.CurrentPage - 2 || i == Model.CurrentPage + 2)
+                        {
+                            <span class="flex items-end px-2 text-slate-400">...</span>
+                        }
+                    }
+                </div>
+
+                <a asp-action="Reviews" asp-route-rating="@Model.FilterRating" asp-route-page="@(Model.CurrentPage + 1)"
+                   class="p-2 rounded-lg border border-primary/10 text-slate-400 hover:text-primary hover:border-primary transition-all @(Model.CurrentPage == Model.TotalPages ? "pointer-events-none opacity-50" : "")">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </a>
+            </footer>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleEditForm(reviewId) {
+            const form = document.getElementById(`edit-form-${reviewId}`);
+            const text = document.getElementById(`reply-text-${reviewId}`);
+
+            if (form.classList.contains('hidden')) {
+                form.classList.remove('hidden');
+                text.classList.add('hidden');
+            } else {
+                form.classList.add('hidden');
+                text.classList.remove('hidden');
+            }
+        }
+    </script>
+}

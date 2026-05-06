@@ -1,0 +1,165 @@
+﻿@{
+    var userName = Context.Session.GetString("UserName") ?? "User";
+    var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - VenueBooking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#C65D3B",
+                        secondary: "#4A5D52",
+                        "background-light": "#FDF8F3",
+                        accent: "#D4A574"
+                    },
+                    fontFamily: {
+                        display: ["Poppins", "sans-serif"],
+                        body: ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Poppins', sans-serif; }
+        .sidebar-active {
+            background-color: #C65D3B;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(198, 92, 57, 0.2);
+        }
+        .sidebar-hover:hover {
+            background-color: rgba(198, 92, 57, 0.08);
+            color: #C65D3B;
+        }
+    </style>
+</head>
+<body class="bg-background-light text-slate-800 min-h-screen">
+    <div class="flex">
+        <!-- Mobile Overlay -->
+        <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleSidebar()"></div>
+
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-white border-r border-slate-100 flex flex-col z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+            <div class="p-6 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="bg-primary text-white p-2.5 rounded-xl shadow-lg">
+                        <span class="material-symbols-outlined">event_seat</span>
+                    </div>
+                    <h1 class="text-xl font-bold text-primary">VenueBooking</h1>
+                </div>
+                <button onclick="toggleSidebar()" class="lg:hidden p-1 text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <nav class="flex-1 px-4 mt-4 space-y-1 overflow-y-auto">
+                <a href="@Url.Action("Dashboard", "Customer")"
+                   class="@(currentAction == "Dashboard" ? "sidebar-active" : "sidebar-hover text-slate-600") flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all">
+                    <span class="material-symbols-outlined text-[22px]">dashboard</span>
+                    Dashboard
+                </a>
+
+                <a href="@Url.Action("BrowseVenues", "Customer")"
+                   class="@(currentAction == "BrowseVenues" || currentAction == "VenueDetails" ? "sidebar-active" : "sidebar-hover text-slate-600") flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all">
+                    <span class="material-symbols-outlined text-[22px]">search</span>
+                    Browse Venues
+                </a>
+
+                <a href="@Url.Action("Bookings", "Customer")"
+                   class="@(currentAction == "Bookings" || currentAction == "BookingDetails" || currentAction == "Payment" ? "sidebar-active" : "sidebar-hover text-slate-600") flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all">
+                    <span class="material-symbols-outlined text-[22px]">calendar_today</span>
+                    My Bookings
+                </a>
+
+                <a href="@Url.Action("Messages", "Customer")"
+                   class="@(currentAction == "Messages" ? "sidebar-active" : "sidebar-hover text-slate-600") flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all">
+                    <span class="material-symbols-outlined text-[22px]">mail</span>
+                    Messages
+                </a>
+
+                <a href="@Url.Action("Notifications", "Customer")"
+                   class="@(currentAction == "Notifications" ? "sidebar-active" : "sidebar-hover text-slate-600") flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all">
+                    <span class="material-symbols-outlined text-[22px]">notifications</span>
+                    Notifications
+                </a>
+
+                <a href="@Url.Action("Settings", "Customer")"
+                   class="@(currentAction == "Settings" ? "sidebar-active" : "sidebar-hover text-slate-600") flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all">
+                    <span class="material-symbols-outlined text-[22px]">settings</span>
+                    Settings
+                </a>
+
+                <div class="pt-4 mt-4 border-t border-slate-100">
+                    <form asp-controller="Auth" asp-action="Logout" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl font-medium transition-all text-left">
+                            <span class="material-symbols-outlined text-[22px]">logout</span>
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </nav>
+
+            <div class="p-4 border-t border-slate-100">
+                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl">
+                    <div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined">person</span>
+                    </div>
+                    <div class="overflow-hidden flex-1">
+                        <p class="text-sm font-bold truncate text-slate-900">@userName</p>
+                        <p class="text-[10px] text-primary font-bold uppercase">Customer</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="lg:ml-64 flex-1 min-h-screen w-full">
+            <!-- Header -->
+            <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-primary/10 px-4 sm:px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleSidebar()" class="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+                            <span class="material-symbols-outlined">menu</span>
+                        </button>
+                        <h2 class="text-lg sm:text-xl font-bold text-slate-800">@ViewData["Title"]</h2>
+                    </div>
+                    <div class="flex items-center gap-2 sm:gap-4">
+                        <a href="@Url.Action("Notifications", "Customer")" class="relative p-2 text-slate-400 hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined">notifications</span>
+                        </a>
+                        <span class="text-sm text-slate-500 hidden sm:inline">@userName</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-4 sm:p-6">
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+    </script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

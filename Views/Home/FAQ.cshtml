@@ -1,0 +1,43 @@
+﻿@{
+    ViewData["Title"] = "FAQ";
+    Layout = "_Layout"; // or use "_OwnerLayout" if you want owner layout
+}
+
+<div class="max-w-4xl mx-auto px-6 py-12">
+    <h1 class="text-3xl font-bold mb-4">Frequently Asked Questions</h1>
+    <p class="text-sm text-slate-500 mb-6">Answers to common questions about listing, bookings and payments.</p>
+
+    <div class="space-y-4">
+        <!-- FAQ Item 1 -->
+        <details class="bg-white rounded-lg p-4 border">
+            <summary class="font-semibold cursor-pointer">How do I create a venue?</summary>
+            <div class="mt-2 text-sm text-slate-600">
+                Go to <a asp-controller="Owner" asp-action="CreateVenue" class="text-primary hover:underline">My Venues → Add Venue</a> and fill the form. You need an active subscription when required.
+            </div>
+        </details>
+
+        <!-- FAQ Item 2 -->
+        <details class="bg-white rounded-lg p-4 border">
+            <summary class="font-semibold cursor-pointer">How are payments handled?</summary>
+            <div class="mt-2 text-sm text-slate-600">
+                Customers pay the venue owner. Online payments (if enabled) are handled via Razorpay; owners record payments in their booking details.
+            </div>
+        </details>
+
+        <!-- FAQ Item 3 -->
+        <details class="bg-white rounded-lg p-4 border">
+            <summary class="font-semibold cursor-pointer">How do I block dates for my venue?</summary>
+            <div class="mt-2 text-sm text-slate-600">
+                Owners can block dates from the Dashboard → Blocked Dates (or <a asp-controller="Owner" asp-action="BlockDates" class="text-primary hover:underline">/Owner/BlockDates</a>).
+            </div>
+        </details>
+
+        <!-- FAQ Item 4 -->
+        <details class="bg-white rounded-lg p-4 border">
+            <summary class="font-semibold cursor-pointer">I did not receive an email — what now?</summary>
+            <div class="mt-2 text-sm text-slate-600">
+                Check spam, ensure your account email is correct, and contact support via the Contact page.
+            </div>
+        </details>
+    </div>
+</div>

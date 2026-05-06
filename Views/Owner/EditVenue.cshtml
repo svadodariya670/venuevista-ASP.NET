@@ -1,0 +1,475 @@
+﻿@model VenueBooking.ViewModels.EditVenueViewModel
+@{
+    ViewData["Title"] = "Edit Venue";
+    Layout = "_OwnerLayout";
+    var amenities = ViewBag.Amenities as List<VenueBooking.Models.Amenity> ?? new List<VenueBooking.Models.Amenity>();
+    var venueTypes = ViewBag.VenueTypes as List<string> ?? new List<string>();
+}
+
+<div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="flex items-center gap-4 mb-8">
+        <a asp-action="Venues" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+            <span class="material-symbols-outlined text-slate-600">arrow_back</span>
+        </a>
+        <div>
+            <h2 class="text-3xl font-bold text-slate-900">Edit Venue</h2>
+            <p class="text-slate-500 mt-1">Update your venue details</p>
+        </div>
+    </div>
+
+    <!-- Pass Razor values to JS via data attributes -->
+    <div id="razorData"
+         data-existing-count="@Model.ExistingImages.Count"
+         class="hidden"></div>
+
+    <form asp-action="EditVenue" method="post" enctype="multipart/form-data" class="space-y-8" id="editVenueForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="VenueId" />
+        <div asp-validation-summary="ModelOnly" class="bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6"></div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center gap-2">
+                <span class="material-symbols-outlined">check_circle</span>
+                @TempData["Success"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2">
+                <span class="material-symbols-outlined">error</span>
+                @TempData["Error"]
+            </div>
+        }
+
+        <!-- Basic Information -->
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">info</span>
+                Basic Information
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                    <label asp-for="VenueName" class="block text-sm font-medium text-slate-700 mb-2">Venue Name *</label>
+                    <input asp-for="VenueName" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary">
+                    <span asp-validation-for="VenueName" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="VenueType" class="block text-sm font-medium text-slate-700 mb-2">Venue Type *</label>
+                    <select asp-for="VenueType" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary">
+                        <option value="">Select venue type</option>
+                        @foreach (var type in venueTypes)
+                        {
+                            <option value="@type">@type</option>
+                        }
+                    </select>
+                    <span asp-validation-for="VenueType" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Capacity" class="block text-sm font-medium text-slate-700 mb-2">Capacity (Guests) *</label>
+                    <input asp-for="Capacity" type="number" min="1" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary">
+                    <span asp-validation-for="Capacity" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label asp-for="Description" class="block text-sm font-medium text-slate-700 mb-2">Description</label>
+                    <textarea asp-for="Description" rows="4" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary"></textarea>
+                    <span asp-validation-for="Description" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="ContactPhone" class="block text-sm font-medium text-slate-700 mb-2">Contact Phone</label>
+                    <input asp-for="ContactPhone" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary">
+                    <span asp-validation-for="ContactPhone" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="IsActive" class="block text-sm font-medium text-slate-700 mb-2">Status</label>
+                    <select asp-for="IsActive" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary">
+                        <option value="true">Live (Visible to customers)</option>
+                        <option value="false">Draft (Hidden)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Location -->
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">location_on</span>
+                Location Details
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                    <label asp-for="Address" class="block text-sm font-medium text-slate-700 mb-2">Full Address *</label>
+                    <textarea asp-for="Address" rows="3" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary"></textarea>
+                    <span asp-validation-for="Address" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="City" class="block text-sm font-medium text-slate-700 mb-2">City *</label>
+                    <input asp-for="City" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary">
+                    <span asp-validation-for="City" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="State" class="block text-sm font-medium text-slate-700 mb-2">State</label>
+                    <input asp-for="State" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-primary focus:border-primary">
+                </div>
+
+                <div class="md:col-span-2 bg-slate-50 p-4 rounded-lg">
+                    <p class="text-sm font-medium text-slate-700 mb-2">Map Coordinates (Optional)</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label asp-for="Latitude" class="block text-xs text-slate-500 mb-1">Latitude</label>
+                            <input asp-for="Latitude" type="number" step="any" class="w-full px-3 py-2 rounded-lg border-slate-200 focus:ring-primary focus:border-primary">
+                        </div>
+                        <div>
+                            <label asp-for="Longitude" class="block text-xs text-slate-500 mb-1">Longitude</label>
+                            <input asp-for="Longitude" type="number" step="any" class="w-full px-3 py-2 rounded-lg border-slate-200 focus:ring-primary focus:border-primary">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Images -->
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">image</span>
+                Venue Images
+                <span class="text-sm font-normal text-slate-500 ml-auto" id="imageCount">
+                    @Model.ExistingImages.Count / 7 images
+                </span>
+            </h3>
+            <p class="text-sm text-slate-500 mb-6">Max 7 images. Hover to set cover or mark for deletion. Add new images in multiple selections.</p>
+
+            <!-- Existing Images -->
+            @if (Model.ExistingImages.Any())
+            {
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6" id="existingImages">
+                    @foreach (var image in Model.ExistingImages)
+                    {
+                        <div class="relative group image-item" data-id="@image.ImageId">
+                            <img src="@image.ImageUrl" class="w-full h-32 object-cover rounded-lg border-2 @(image.IsCover ? "border-primary" : "border-slate-200")">
+
+                            @if (image.IsCover)
+                            {
+                                <span class="absolute top-2 left-2 px-2 py-1 bg-primary text-white text-xs rounded font-medium cover-badge">Cover</span>
+                            }
+
+                            <div class="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                <button type="button" onclick="setCover(@image.ImageId)" class="p-2 bg-white rounded-lg text-primary hover:bg-primary hover:text-white transition-colors" title="Set as cover">
+                                    <span class="material-symbols-outlined text-sm">star</span>
+                                </button>
+                                <button type="button" onclick="markForDelete(@image.ImageId)" class="p-2 bg-white rounded-lg text-red-500 hover:bg-red-500 hover:text-white transition-colors" title="Delete">
+                                    <span class="material-symbols-outlined text-sm">delete</span>
+                                </button>
+                            </div>
+
+                            <!-- Red overlay when marked for deletion -->
+                            <div class="absolute inset-0 bg-red-500/30 border-2 border-red-500 rounded-lg pointer-events-none hidden" id="delete-overlay-@image.ImageId"></div>
+
+                            <input type="checkbox" name="ImagesToDelete" value="@image.ImageId" class="hidden delete-checkbox" id="delete_@image.ImageId">
+                            <input type="radio" name="NewCoverImageId" value="@image.ImageId" class="hidden cover-radio" id="cover_@image.ImageId"
+                                   @(image.IsCover ? "checked" : "")>
+                        </div>
+                    }
+                </div>
+                <p class="text-xs text-slate-400 mb-4" id="deleteCountLabel">0 images marked for deletion</p>
+            }
+
+            <!-- Add New Images -->
+            <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-primary transition-colors" id="dropZone">
+                <p class="text-slate-600 font-medium mb-2">Add more images</p>
+                <p class="text-slate-400 text-sm mb-4">JPG, PNG, WebP up to 5MB each. You can add in multiple selections.</p>
+                <!-- Picker input (opens dialog, not submitted) -->
+                <input type="file" id="imagePickerInput" multiple accept=".jpg,.jpeg,.png,.webp" class="hidden">
+                <!-- Real form input synced via JS -->
+                <input type="file" name="NewImages" id="imageFormInput" multiple accept=".jpg,.jpeg,.png,.webp" class="hidden">
+                <button type="button" onclick="document.getElementById('imagePickerInput').click()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 transition-colors">
+                    Select Images
+                </button>
+                <p class="text-xs text-slate-400 mt-2" id="newImageCountLabel">0 new images selected</p>
+            </div>
+
+            <!-- New Images Preview -->
+            <div id="newImagesPreview" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mt-4"></div>
+
+            <input type="hidden" name="NewCoverImageId" id="newCoverImageId" value="0">
+        </div>
+
+        <!-- Amenities -->
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">check_circle</span>
+                Amenities
+            </h3>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                @foreach (var amenity in amenities)
+                {
+                    var isSelected = Model.SelectedAmenities.Contains(amenity.AmenityId);
+                    var price = Model.AmenityPrices.ContainsKey(amenity.AmenityId) ? Model.AmenityPrices[amenity.AmenityId] : null;
+
+                    <div class="amenity-item border border-slate-200 rounded-lg p-3 hover:border-primary transition-colors @(isSelected ? "border-primary bg-primary/5" : "")">
+                        <div class="flex items-start gap-3">
+                            <input type="checkbox" name="SelectedAmenities" value="@amenity.AmenityId" id="amenity_@amenity.AmenityId"
+                                   class="amenity-checkbox mt-1 w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary"
+                                   @(isSelected ? "checked" : "") onchange="toggleAmenityPrice(@amenity.AmenityId)">
+                            <div class="flex-1">
+                                <label for="amenity_@amenity.AmenityId" class="font-medium text-sm text-slate-700 cursor-pointer block">@amenity.Name</label>
+                                @if (!string.IsNullOrEmpty(amenity.Category))
+                                {
+                                    <span class="text-xs text-slate-400">@amenity.Category</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="mt-2 amenity-price @(isSelected ? "" : "hidden")" id="price_@amenity.AmenityId">
+                            <input type="number" name="AmenityPrices[@amenity.AmenityId]" step="0.01" value="@(price?.ToString("0.00") ?? "")"
+                                   class="w-full px-2 py-1 text-sm rounded border-slate-200 focus:ring-primary focus:border-primary" placeholder="Price (optional)">
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex items-center justify-end gap-4 pt-4">
+            <a asp-action="Venues" class="px-8 py-3 border border-slate-200 rounded-lg font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+                Cancel
+            </a>
+            <button type="submit" class="px-8 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-all shadow-md shadow-primary/20 flex items-center gap-2">
+                <span class="material-symbols-outlined">save</span>
+                Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // =============================================
+        // Read Razor values from data attributes
+        // =============================================
+        const MAX_IMAGES = 7;
+        const MAX_FILE_SIZE = 5 * 1024 * 1024;
+        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+        const existingCount = parseInt(document.getElementById('razorData').dataset.existingCount) || 0;
+
+        // =============================================
+        // Existing image management
+        // =============================================
+        function getDeletedCount() {
+            return document.querySelectorAll('.delete-checkbox:checked').length;
+        }
+
+        function markForDelete(imageId) {
+            const checkbox = document.getElementById('delete_' + imageId);
+            const item = document.querySelector('[data-id="' + imageId + '"]');
+            const overlay = document.getElementById('delete-overlay-' + imageId);
+
+            checkbox.checked = !checkbox.checked;
+
+            if (checkbox.checked) {
+                item.classList.add('opacity-50', 'grayscale');
+                overlay.classList.remove('hidden');
+            } else {
+                item.classList.remove('opacity-50', 'grayscale');
+                overlay.classList.add('hidden');
+            }
+
+            updateDeleteCount();
+            updateTotalImageCount();
+        }
+
+        function updateDeleteCount() {
+            const count = getDeletedCount();
+            const label = document.getElementById('deleteCountLabel');
+            if (label) {
+                label.textContent = count > 0 ? count + ' image(s) marked for deletion' : '0 images marked for deletion';
+            }
+        }
+
+        function setCover(imageId) {
+            // Remove cover styling from all existing images
+            document.querySelectorAll('.image-item img').forEach(function(img) {
+                img.classList.remove('border-primary');
+                img.classList.add('border-slate-200');
+            });
+            document.querySelectorAll('.cover-badge').forEach(function(badge) {
+                badge.remove();
+            });
+
+            // Add cover to selected
+            const item = document.querySelector('[data-id="' + imageId + '"]');
+            const img = item.querySelector('img');
+            img.classList.remove('border-slate-200');
+            img.classList.add('border-primary');
+
+            const badge = document.createElement('span');
+            badge.className = 'absolute top-2 left-2 px-2 py-1 bg-primary text-white text-xs rounded font-medium cover-badge';
+            badge.textContent = 'Cover';
+            item.insertBefore(badge, item.firstChild.nextSibling);
+
+            // Set hidden values
+            document.getElementById('cover_' + imageId).checked = true;
+            document.getElementById('newCoverImageId').value = imageId;
+        }
+
+        // =============================================
+        // New image upload with accumulation
+        // =============================================
+        let selectedFiles = [];
+
+        const pickerInput = document.getElementById('imagePickerInput');
+        const formInput = document.getElementById('imageFormInput');
+        const previewContainer = document.getElementById('newImagesPreview');
+        const dropZone = document.getElementById('dropZone');
+        const newCountLabel = document.getElementById('newImageCountLabel');
+
+        pickerInput.addEventListener('change', function(e) {
+            addFiles(Array.from(e.target.files));
+            pickerInput.value = '';
+        });
+
+        // Drag and drop
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            dropZone.classList.add('border-primary', 'bg-primary/5');
+        });
+
+        dropZone.addEventListener('dragleave', function() {
+            dropZone.classList.remove('border-primary', 'bg-primary/5');
+        });
+
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            dropZone.classList.remove('border-primary', 'bg-primary/5');
+            addFiles(Array.from(e.dataTransfer.files));
+        });
+
+        function getRemainingExistingCount() {
+            return existingCount - getDeletedCount();
+        }
+
+        function addFiles(newFiles) {
+            for (const file of newFiles) {
+                const totalAfterAdd = getRemainingExistingCount() + selectedFiles.length + 1;
+                if (totalAfterAdd > MAX_IMAGES) {
+                    alert('Maximum ' + MAX_IMAGES + ' total images allowed (existing + new \u2212 deleted). Extra images were ignored.');
+                    break;
+                }
+                if (!ALLOWED_TYPES.includes(file.type)) {
+                    alert('"' + file.name + '" is not supported. Use JPG, PNG, or WebP.');
+                    continue;
+                }
+                if (file.size > MAX_FILE_SIZE) {
+                    alert('"' + file.name + '" is too large (' + (file.size / 1024 / 1024).toFixed(1) + ' MB). Max 5 MB.');
+                    continue;
+                }
+                // Skip duplicates
+                const isDuplicate = selectedFiles.some(function(f) {
+                    return f.name === file.name && f.size === file.size && f.lastModified === file.lastModified;
+                });
+                if (isDuplicate) continue;
+
+                selectedFiles.push(file);
+            }
+            syncFormInput();
+            renderPreviews();
+            updateTotalImageCount();
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            syncFormInput();
+            renderPreviews();
+            updateTotalImageCount();
+        }
+
+        function syncFormInput() {
+            const dt = new DataTransfer();
+            selectedFiles.forEach(function(f) { dt.items.add(f); });
+            formInput.files = dt.files;
+            newCountLabel.textContent = selectedFiles.length + ' new image(s) selected';
+        }
+
+        function renderPreviews() {
+            previewContainer.innerHTML = '';
+            selectedFiles.forEach(function(file, index) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = 'relative group';
+                    div.innerHTML =
+                        '<img src="' + e.target.result + '" class="w-full h-32 object-cover rounded-lg border-2 border-dashed border-primary" alt="' + file.name + '">' +
+                        '<span class="absolute top-2 left-2 px-2 py-1 bg-emerald-500 text-white text-xs rounded font-medium">New</span>' +
+                        '<div class="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">' +
+                            '<span class="text-white text-xs font-medium">' + (file.size / 1024 / 1024).toFixed(2) + ' MB</span>' +
+                            '<button type="button" onclick="removeFile(' + index + ')" ' +
+                                'class="mt-1 px-2 py-1 bg-red-500 text-white text-xs rounded-md hover:bg-red-600 flex items-center gap-1">' +
+                                '<span class="material-symbols-outlined text-sm">delete</span> Remove' +
+                            '</button>' +
+                        '</div>';
+                    previewContainer.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // =============================================
+        // Total image count display + drop zone toggle
+        // =============================================
+        function updateTotalImageCount() {
+            const total = getRemainingExistingCount() + selectedFiles.length;
+            document.getElementById('imageCount').textContent = total + ' / ' + MAX_IMAGES + ' images';
+
+            if (total >= MAX_IMAGES) {
+                dropZone.style.display = 'none';
+            } else {
+                dropZone.style.display = 'block';
+            }
+        }
+
+        // =============================================
+        // Amenity price toggle
+        // =============================================
+        function toggleAmenityPrice(amenityId) {
+            const checkbox = document.getElementById('amenity_' + amenityId);
+            const priceDiv = document.getElementById('price_' + amenityId);
+            const item = checkbox.closest('.amenity-item');
+
+            if (checkbox.checked) {
+                priceDiv.classList.remove('hidden');
+                item.classList.add('border-primary', 'bg-primary/5');
+            } else {
+                priceDiv.classList.add('hidden');
+                priceDiv.querySelector('input').value = '';
+                item.classList.remove('border-primary', 'bg-primary/5');
+            }
+        }
+
+        // =============================================
+        // Form validation
+        // =============================================
+        document.getElementById('editVenueForm').addEventListener('submit', function(e) {
+            const total = getRemainingExistingCount() + selectedFiles.length;
+            if (total === 0) {
+                e.preventDefault();
+                alert('At least one image is required. Either keep an existing image or upload a new one.');
+                return false;
+            }
+            if (total > MAX_IMAGES) {
+                e.preventDefault();
+                alert('Maximum ' + MAX_IMAGES + ' images allowed. You have ' + getRemainingExistingCount() + ' existing + ' + selectedFiles.length + ' new = ' + total + '.');
+                return false;
+            }
+        });
+    </script>
+}
